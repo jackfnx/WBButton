@@ -24,9 +24,9 @@ end
 --------------------------------------------------
 -- 入口
 --------------------------------------------------
-Addon.Frame:SetScript("OnEvent", function(self, event, id, ...)
+Addon.Frame:SetScript("OnEvent", function(self, event, ...)
     if self[event] then
-        self[event](self, id, ...)
+        self[event](self, ...)
     end
 end)
 
@@ -38,16 +38,17 @@ function Addon.Frame:PLAYER_LOGIN()
     -- 等完全初始化
     Delay(1, function()
         Addon.Frame:CreateToolbar()
+        Addon.Frame:CreateProgressBar()
     end)
 end
 
-function Addon.Frame.BANKFRAME_OPENED(_, id)
+function Addon.Frame.BANKFRAME_OPENED(...)
     if Addon.IsWarbandBankOpen() then
         Addon.Toolbar:Show()
     end
 end
 
-function Addon.Frame.BANKFRAME_CLOSED(_, id)
+function Addon.Frame.BANKFRAME_CLOSED(...)
     Addon.Toolbar:Hide()
 end
 
@@ -135,4 +136,37 @@ function Addon:OnSettingClick()
     print("|cff00ff00[WBB]|r 点击设置按钮")
 
     print("|cffffff00[WBB]|r Setting 未实现")
+end
+
+--------------------------------------------------
+-- 进度条
+--------------------------------------------------
+function Addon.Frame:CreateProgressBar()
+    local bar = CreateFrame("StatusBar", nil, UIParent)
+    bar:SetSize(200, 20)
+    bar:SetPoint("TOP", Addon.Toolbar, "BOTTOM", 0, 0) -- 紧挨着工具条底部
+
+    bar:SetStatusBarTexture("Interface\\TARGETINGFRAME\\UI-StatusBar")
+    bar:SetMinMaxValues(0, 1)
+    bar:SetValue(0)
+    bar:SetMinMaxValues(0, 1)
+    bar:SetStatusBarColor(0, 0.8, 0)
+    bar:Hide()
+
+    -- 背景
+    local bg = bar:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0, 0, 0, 0.5)
+
+    -- 文字
+    bar.text = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    bar.text:SetPoint("CENTER")
+
+    local oldSetValue = bar.SetValue
+    function bar:SetValue(v)
+        oldSetValue(self, v)
+        self.text:SetText(string.format("%.0f%%", v * 100))
+    end
+
+    Addon.ProgressBar = bar
 end

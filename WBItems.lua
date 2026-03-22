@@ -22,7 +22,7 @@ function Addon:GetSlot(arg, slotsNum, i)
     local bags = BAG_ID_LIST[arg]
     for j, num in ipairs(slotsNum) do
         local bag = bags[j]
-        if num > i then
+        if num >= i then
             return bag, i
         else
             i = i - num
@@ -32,10 +32,21 @@ function Addon:GetSlot(arg, slotsNum, i)
     return -1, -1
 end
 
+function Addon:UpdateItem(items, bag, slot, newBag, newSlot)
+    for _, item in ipairs(items) do
+        if item.bag == bag and item.slot == slot then
+            item.bag = newBag
+            item.slot = newSlot
+            return
+        end
+    end
+end
+
 function Addon:DeleteItem(items, bag, slot)
     for i, item in ipairs(items) do
         if item.bag == bag and item.slot == slot then
             table.remove(items, i)
+            return
         end
     end
 end

@@ -4,6 +4,12 @@ local Category = Addon.Category
 
 
 function Reorder:Execute()
+    if Addon.queue then
+        print("|cff00ff00[WBB]|r 取消队列")
+        Addon:StopQueue()
+        return
+    end
+
     local accounts = Addon:GetItems(true, "account")
     local spaces = Addon:GetItems(false, "account")
 
@@ -33,20 +39,26 @@ function Reorder:Execute()
 
     table.sort(accounts, function(a, b)
         if a.itemID == b.itemID then
+            -- 理论上讲，这里不应该出现
             return (a.bag * 100 + a.slot) < (b.bag * 100 + b.slot)
         end
-        local type1 = Category:GetCategory(a.itemID)
-        local type2 = Category:GetCategory(b.itemID)
+        local idx1 = Category:GetOrderIndex(a.itemID)
+        local idx2 = Category:GetOrderIndex(b.itemID)
 
-        if (type1 == type2) then
+        if (idx1 ~= idx2) then
+            return idx1 < idx2
+        end
+
+        if Category:IsOverOrder(a.itemID) then
             return (a.bag * 100 + a.slot) < (b.bag * 100 + b.slot)
         end
 
-        return type1 < type2
+        return a.itemID < b.itemID
     end)
 
-    local queue2 = {}
     local slotsNum = Addon:GetSlotsNum("account")
+
+    local queue2 = {}
     for i, item in ipairs(accounts) do
         local newBag, newSlot = Addon:GetSlot("account", slotsNum, i)
         if item.bag == newBag and item.slot == newSlot then
@@ -54,6 +66,7 @@ function Reorder:Execute()
         elseif Addon:SlotInList(spaces, newBag, newSlot) then
             -- 如估计目标位置是空的，就直接把他挪过去
             table.insert(queue2, {
+                flag = "1",
                 srcBag = item.bag,
                 srcSlot = item.slot,
                 destBag = newBag,
@@ -72,13 +85,15 @@ function Reorder:Execute()
             end
             local space = table.remove(spaces, 1)
             table.insert(queue2, {
+                flag = "2",
                 srcBag = newBag,
                 srcSlot = newSlot,
                 destBag = space.bag,
                 destSlot = space.slot
             })
-            Addon:DeleteItem(spaces, space.bag, space.slot)
+            Addon:UpdateItem(accounts, newBag, newSlot, space.bag, space.slot)
             table.insert(queue2, {
+                flag = "3",
                 srcBag = item.bag,
                 srcSlot = item.slot,
                 destBag = newBag,
@@ -91,7 +106,11 @@ function Reorder:Execute()
         end
     end
 
-    Addon:StartQueue(queue2)
+    if #queue2 == 0 then
+        print("|cff00ff00[WBB]|r 已经没有什么值得排序的了")
+    else
+        Addon:StartQueue(queue2)
+    end
 end
 
 function Reorder:BuildMergePlan(items, queue)
