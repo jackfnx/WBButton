@@ -1,89 +1,115 @@
-
 local _, Addon = ...
+local Deposit = Addon.Deposit
+local Category = Addon.Category
 
 
-function Addon.Deposit:ExecuteTransfer()
+function Deposit:Execute()
+    local inventories, accounts = self:GetItems(true, "inventory", "account")
+    local accountsN = self:GetItems(false, "account")
 
-    local items1, items2 = self:GetAllItems()
-
-    for _, item in ipairs(items1) do
-        if self:ShouldMove(item.itemID) then
-            print(GetItemInfoInstant(item.itemID))
-            self:MoveItemToBank(item.bag, item.slot)
+    local queue1 = {}
+    for _, item in ipairs(inventories) do
+        if Category:MatchRules(item.itemID) then
+            table.insert(queue1, item)
         end
     end
 
-    for _, item in ipairs(items2) do
-        if self:ShouldMove(item.itemID) then
-            print(GetItemInfoInstant(item.itemID))
-            self:MoveItemToBank(item.bag, item.slot)
-        end
-    end
-end
-
-function Addon.Deposit:GetAllItems()
-    local bagItems = {}
-    local wbbItems = {}
-
-    local bags = {
-        inventory = {0,1,2,3,4,5},
-        account = {12,13,14,15,16}
-    }
-
-    for groupName, group in pairs(bags) do
-        if groupName == "inventory" or groupName == "account" then
-            local items = (groupName == "inventory") and bagItems or wbbItems
-            for _, bag in ipairs(group) do
-                local numSlots = C_Container.GetContainerNumSlots(bag)
-
-                for slot = 1, numSlots do
-                    local itemID = C_Container.GetContainerItemID(bag, slot)
-
-                    if itemID then
-                        table.insert(items, {
-                            bag = bag,
-                            slot = slot,
-                            itemID = itemID
-                        })
-                    end
-                end
+    local queue2 = {}
+    for _, dest_item in ipairs(accounts) do
+        for i, src_item in ipairs(queue1) do
+            if (dest_item.itemID == src_item.itemID) then
+                src_item.bankTabID = dest_item.bagID
+                src_item.bankSlot = dest_item.slot
+                table.insert(queue2, {
+                    itemID = src_item.itemID,
+                    srcBag = src_item.bag,
+                    srcSlot = src_item.slot,
+                    destBag = dest_item.bag,
+                    destSlot = dest_item.slot
+                })
+                table.remove(queue1, i)
+                break
             end
         end
     end
 
-    return bagItems, wbbItems
-end
-
-function Addon.Deposit:ShouldMove(itemID)
-    local classID = select(6, GetItemInfoInstant(itemID))
-
-    if (itemID == 237364) then
-        return true
+    for _, item in ipairs(queue1) do
+        if #accountsN > 0 then
+            for i, dest_kg in ipairs(accountsN) do
+                table.insert(queue2, {
+                    itemID = item.itemID,
+                    srcBag = item.bag,
+                    srcSlot = item.slot,
+                    destBag = dest_kg.bag,
+                    destSlot = dest_kg.slot
+                })
+                table.remove(accountsN, i)
+                break;
+            end
+        else
+            print("|cff00ff00[WBB]|r 银行满了，有物品没存进去")
+            break
+        end
     end
-    -- -- 示例：只存“材料”
-    -- if classID == 7 then
-    --     return true
-    -- end
 
-    return false
+    self.queue = queue2
+    self:StartProcessing()
 end
 
-function Addon.Deposit:MoveItemToBank(bag, slot)
-    -- 拿起物品
-    C_Container.PickupContainerItem(bag, slot)
+-- 取得物品列表（根据物品还是空格，以及容器类型）
+function Deposit:GetItems(yn, ...)
+    local bagsList = {
+        inventory = { 0, 1, 2, 3, 4, 5 },
+        account = { 12, 13, 14, 15, 16 }
+    }
 
-    -- 放到银行（自动找空位）
+    local items = {}
+    for i = 1, select('#', ...) do
+        local arg = select(i, ...)
+        local argItems = {}
+        local bags = bagsList[arg]
+        for _, bag in ipairs(bags) do
+            local numSlots = C_Container.GetContainerNumSlots(bag)
+
+            for slot = 1, numSlots do
+                local info = C_Container.GetContainerItemInfo(bag, slot)
+                local itemID = info and info.itemID
+                local itemCount = info and info.stackCount
+
+                if (itemID and yn) or (not itemID and not yn) then
+                    table.insert(argItems, {
+                        itemID = itemID,
+                        itemCount = itemCount,
+                        bag = bag,
+                        slot = slot
+                    })
+                end
+            end
+        end
+        table.insert(items, argItems)
+    end
+
+    return unpack(items)
 end
 
-function Addon.Deposit:StartProcessing()
-    self:SetScript("OnUpdate", function(_, elapsed)
+function Deposit:MoveItemToBank(srcBag, srcSlot, destBag, destSlot)
+    ClearCursor()
+
+    C_Container.PickupContainerItem(srcBag, srcSlot)
+    C_Container.PickupContainerItem(destBag, destSlot)
+end
+
+function Deposit:StartProcessing()
+    Addon.Frame:SetScript("OnUpdate", function(_, elapsed)
         if not self.queue or #self.queue == 0 then
-            self:SetScript("OnUpdate", nil)
+            Addon.Frame:SetScript("OnUpdate", nil)
             return
         end
 
         local item = table.remove(self.queue, 1)
 
-        C_Container.PickupContainerItem(item.bag, item.slot)
+        print("|cff00ff00[WBB]|r 正在存入", Category:ItemStr(item.itemID))
+
+        self:MoveItemToBank(item.srcBag, item.srcSlot, item.destBag, item.destSlot)
     end)
 end

@@ -5,6 +5,8 @@
 ## Version: 0.0.1
 ## Notes: Warband Bank Button
 ## Notes-zhCN: 战团银行按钮
+## IconTexture: 113233
 
 WBButton.lua
+WBCategory.lua
 WBDeposit.lua

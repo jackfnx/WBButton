@@ -1,10 +1,9 @@
 -- WBButton.lua
 
--- local Addon = CreateFrame("Frame")
--- Addon.name = ...
 local _, Addon = ...
-Addon.Frame = CreateFrame("Frame")  -- 用于注册事件
+Addon.Frame = CreateFrame("Frame") -- 用于注册事件
 Addon.Deposit = {}
+Addon.Category = {}
 
 --------------------------------------------------
 -- 工具：延迟执行
@@ -72,21 +71,21 @@ function Addon.Frame:CreateToolbar()
 
     -- 创建工具条框架
     local toolbar = CreateFrame("Frame", "WB_Toolbar", UIParent, BackdropTemplateMixin)
-    toolbar:SetSize(200, 30) -- 宽200，高30
+    toolbar:SetSize(200, 30)                        -- 宽200，高30
     toolbar:SetPoint("TOP", UIParent, "TOP", 0, -5) -- 顶部中间，向下偏移5
     local bg = toolbar:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(true)
-    bg:SetColorTexture(0,0,0,0.5) -- 半透明黑
+    bg:SetColorTexture(0, 0, 0, 0.5) -- 半透明黑
     toolbar:Hide()
 
     local buttons = {}
-    local buttonNames = {"整理", "存入", "设置"}
+    local buttonNames = { "整理", "存入", "设置" }
 
     for i, name in ipairs(buttonNames) do
-        local btn = CreateFrame("Button", "WB_Toolbar_Button"..i, toolbar, "UIPanelButtonTemplate")
+        local btn = CreateFrame("Button", "WB_Toolbar_Button" .. i, toolbar, "UIPanelButtonTemplate")
         btn:SetSize(60, 24)
         btn:SetText(name)
-        btn:SetPoint("LEFT", toolbar, "LEFT", (i-1)*65 + 5, 0) -- 65间隔
+        btn:SetPoint("LEFT", toolbar, "LEFT", (i - 1) * 65 + 5, 0) -- 65间隔
         buttons[name] = btn
     end
 
@@ -120,9 +119,8 @@ end
 function Addon:OnDepositClick()
     print("|cff00ff00[WBB]|r 点击存入按钮")
 
-    -- TODO：接入你的执行器
-    if Addon.Deposit.ExecuteTransfer then
-        Addon.Deposit:ExecuteTransfer()
+    if Addon.Deposit.Execute then
+        Addon.Deposit:Execute()
     else
         print("|cffffff00[WBB]|r ExecuteTransfer 未实现")
     end
