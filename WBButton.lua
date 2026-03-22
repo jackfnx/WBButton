@@ -4,6 +4,7 @@ local _, Addon = ...
 Addon.Frame = CreateFrame("Frame") -- 用于注册事件
 Addon.Deposit = {}
 Addon.Category = {}
+Addon.Reorder = {}
 
 --------------------------------------------------
 -- 工具：延迟执行
@@ -113,7 +114,11 @@ end
 function Addon:OnReorderClick()
     print("|cff00ff00[WBB]|r 点击整理按钮")
 
-    print("|cffffff00[WBB]|r Reorder 未实现")
+    if Addon.Reorder.Execute then
+        Addon.Reorder:Execute()
+    else
+        print("|cffffff00[WBB]|r Reorder 未实现")
+    end
 end
 
 function Addon:OnDepositClick()

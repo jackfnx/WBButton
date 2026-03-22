@@ -8,5 +8,8 @@
 ## IconTexture: 113233
 
 WBButton.lua
+WBItems.lua
+WBMover.lua
 WBCategory.lua
 WBDeposit.lua
+WBReorder.lua
