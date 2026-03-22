@@ -1,0 +1,10 @@
+## Interface: 120001
+## Title: Warband Bank Button
+## Title-zhCN: 战团银行按钮
+## Author: sixue
+## Version: 0.0.1
+## Notes: Warband Bank Button
+## Notes-zhCN: 战团银行按钮
+
+WBButton.lua
+WBDeposit.lua
