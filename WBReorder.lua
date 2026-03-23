@@ -4,7 +4,7 @@ local Category = Addon.Category
 
 
 function Reorder:Execute()
-    if Addon.queue then
+    if Addon.queue and #Addon.queue > 0 then
         print("|cff00ff00[WBB]|r 取消队列")
         Addon:StopQueue()
         return
@@ -22,7 +22,7 @@ function Reorder:Execute()
     end
 
     local queue1 = {}
-    for _, items in ipairs(grouped) do
+    for _, items in pairs(grouped) do
         if #items > 1 then
             Reorder:BuildMergePlan(items, queue1)
         end
@@ -49,9 +49,9 @@ function Reorder:Execute()
             return idx1 < idx2
         end
 
-        if Category:IsOverOrder(a.itemID) then
-            return (a.bag * 100 + a.slot) < (b.bag * 100 + b.slot)
-        end
+        -- if Category:IsOverOrder(a.itemID) then
+        --     return (a.bag * 100 + a.slot) < (b.bag * 100 + b.slot)
+        -- end
 
         return a.itemID < b.itemID
     end)
@@ -66,7 +66,6 @@ function Reorder:Execute()
         elseif Addon:SlotInList(spaces, newBag, newSlot) then
             -- 如估计目标位置是空的，就直接把他挪过去
             table.insert(queue2, {
-                flag = "1",
                 srcBag = item.bag,
                 srcSlot = item.slot,
                 destBag = newBag,
@@ -85,7 +84,6 @@ function Reorder:Execute()
             end
             local space = table.remove(spaces, 1)
             table.insert(queue2, {
-                flag = "2",
                 srcBag = newBag,
                 srcSlot = newSlot,
                 destBag = space.bag,
@@ -93,7 +91,6 @@ function Reorder:Execute()
             })
             Addon:UpdateItem(accounts, newBag, newSlot, space.bag, space.slot)
             table.insert(queue2, {
-                flag = "3",
                 srcBag = item.bag,
                 srcSlot = item.slot,
                 destBag = newBag,
@@ -149,7 +146,7 @@ function Reorder:BuildMergePlan(items, queue)
                             srcBag = source.bag,
                             srcSlot = source.slot,
                             destBag = receiver.bag,
-                            destSlot = receiver.bag
+                            destSlot = receiver.slot
                         })
 
                         -- 更新数量
