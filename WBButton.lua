@@ -5,6 +5,7 @@ Addon.Frame = CreateFrame("Frame") -- 用于注册事件
 Addon.Deposit = {}
 Addon.Category = {}
 Addon.Reorder = {}
+Addon.Settings = {}
 
 --------------------------------------------------
 -- 工具：延迟执行
@@ -39,6 +40,8 @@ function Addon.Frame:PLAYER_LOGIN()
     Delay(1, function()
         Addon.Frame:CreateToolbar()
         Addon.Frame:CreateProgressBar()
+        Addon.Settings:InitConfig()
+        Addon.Settings:CreateConfigUI()
     end)
 end
 
@@ -75,9 +78,11 @@ function Addon.Frame:CreateToolbar()
     local toolbar = CreateFrame("Frame", "WB_Toolbar", UIParent, BackdropTemplateMixin)
     toolbar:SetSize(200, 30)                        -- 宽200，高30
     toolbar:SetPoint("TOP", UIParent, "TOP", 0, -5) -- 顶部中间，向下偏移5
+
     local bg = toolbar:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(true)
     bg:SetColorTexture(0, 0, 0, 0.5) -- 半透明黑
+
     toolbar:Hide()
 
     local buttons = {}
@@ -135,7 +140,11 @@ end
 function Addon:OnSettingClick()
     print("|cff00ff00[WBB]|r 点击设置按钮")
 
-    print("|cffffff00[WBB]|r Setting 未实现")
+    if self.Settings.Execute then
+        self.Settings:Execute()
+    else
+        print("|cffffff00[WBB]|r Setting 未实现")
+    end
 end
 
 --------------------------------------------------

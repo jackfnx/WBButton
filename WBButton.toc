@@ -13,3 +13,4 @@ WBMover.lua
 WBCategory.lua
 WBDeposit.lua
 WBReorder.lua
+WBSettings.lua
