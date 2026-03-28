@@ -112,17 +112,46 @@ function Addon:GetExpansionName(id)
     return self.ExpansionNames[id] or "未知资料片"
 end
 
-function Addon:GetItemInfo(itemID)
+function Addon:GetItemInfo(itemID, ls)
     local values = { C_Item.GetItemInfo(itemID) }
     local info = {
+        itemID = itemID,
         itemName = values[1],
+        itemLink = values[2],
+        itemQuality = values[3],
+        itemLevel = values[4],
+        itemMinLevel = values[5],
         itemType = values[6],
         itemSubType = values[7],
+        itemStackCount = values[8],
+        itemEquipLoc = values[9],
+        itemTexture = values[10],
+        sellPrice = values[11],
         classID = values[12],
         subClassID = values[13],
         bindType = values[14],
-        expansionID = values[15]
+        expansionID = values[15],
     }
+    if ls then
+        info = {
+            [1] = { 'itemID', itemID },
+            [2] = { 'itemName', values[1] },
+            [3] = { 'itemLink', values[2] },
+            [4] = { 'itemQuality', values[3] },
+            [5] = { 'itemLevel', values[4] },
+            [6] = { 'itemMinLevel', values[5] },
+            [7] = { 'itemType', values[6] },
+            [8] = { 'itemSubType', values[7] },
+            [9] = { 'itemStackCount', values[8] },
+            [10] = { 'itemEquipLoc', values[9] },
+            [11] = { 'itemTexture', values[10] },
+            [12] = { 'sellPrice', values[11] },
+            [13] = { 'classID', values[12] },
+            [14] = { 'subClassID', values[13] },
+            [15] = { 'bindType', values[14] },
+            [16] = { 'expansionID', values[15] },
+        }
+    end
     return info
 end
 

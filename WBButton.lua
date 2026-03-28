@@ -6,6 +6,7 @@ Addon.Deposit = {}
 Addon.Category = {}
 Addon.Reorder = {}
 Addon.Settings = {}
+Addon.Widget = {}
 
 --------------------------------------------------
 -- 工具：延迟执行
@@ -42,6 +43,7 @@ function Addon.Frame:PLAYER_LOGIN()
         Addon.Frame:CreateProgressBar()
         Addon.Settings:InitConfig()
         Addon.Settings:CreateConfigUI()
+        Addon.Widget:CreateItemWidgetUI()
     end)
 end
 
@@ -76,7 +78,7 @@ function Addon.Frame:CreateToolbar()
 
     -- 创建工具条框架
     local toolbar = CreateFrame("Frame", "WB_Toolbar", UIParent, BackdropTemplateMixin)
-    toolbar:SetSize(200, 30)                        -- 宽200，高30
+    toolbar:SetSize(265, 30)                        -- 宽200，高30
     toolbar:SetPoint("TOP", UIParent, "TOP", 0, -5) -- 顶部中间，向下偏移5
 
     local bg = toolbar:CreateTexture(nil, "BACKGROUND")
@@ -86,7 +88,7 @@ function Addon.Frame:CreateToolbar()
     toolbar:Hide()
 
     local buttons = {}
-    local buttonNames = { "整理", "存入", "设置" }
+    local buttonNames = { "整理", "存入", "小工具", "设置" }
 
     for i, name in ipairs(buttonNames) do
         local btn = CreateFrame("Button", "WB_Toolbar_Button" .. i, toolbar, "UIPanelButtonTemplate")
@@ -104,6 +106,11 @@ function Addon.Frame:CreateToolbar()
     -- 存入
     buttons["存入"]:SetScript("OnClick", function()
         Addon:OnDepositClick()
+    end)
+
+    -- 小工具
+    buttons["小工具"]:SetScript("OnClick", function()
+        Addon:OnWidgetClick()
     end)
 
     -- 设置
@@ -133,7 +140,17 @@ function Addon:OnDepositClick()
     if Addon.Deposit.Execute then
         Addon.Deposit:Execute()
     else
-        print("|cffffff00[WBB]|r ExecuteTransfer 未实现")
+        print("|cffffff00[WBB]|r Deposit 未实现")
+    end
+end
+
+function Addon:OnWidgetClick()
+    print("|cff00ff00[WBB]|r 点击小工具按钮")
+
+    if Addon.Widget.WidgetDialog then
+        Addon.Widget.WidgetDialog:Show()
+    else
+        print("|cffffff00[WBB]|r Widget 未实现")
     end
 end
 
