@@ -120,6 +120,7 @@ function Addon:GetItemInfo(itemID)
         itemSubType = values[7],
         classID = values[12],
         subClassID = values[13],
+        bindType = values[14],
         expansionID = values[15]
     }
     return info

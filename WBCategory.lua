@@ -4,6 +4,10 @@ local Category = Addon.Category
 function Category:MatchRules(itemID)
     local info = Addon:GetItemInfo(itemID)
 
+    if info.bindType ~= 0 then
+        return false
+    end
+
     if (info.classID == 0) then
         -- 药水/合剂
         if info.subClassID == 1 or info.subClassID == 2 then
@@ -18,11 +22,11 @@ function Category:MatchRules(itemID)
             if info.expansionID == 7 or info.expansionID == 8 or info.expansionID == 9 or info.expansionID == 10 then
                 return true
             end
-            if info.subClassID == 6 or info.subClassID == 7 or info.subClassID == 9 then
-                if info.expansionID == 11 then
-                    return true
-                end
-            end
+            -- if info.subClassID == 6 or info.subClassID == 7 or info.subClassID == 9 then
+            --     if info.expansionID == 11 then
+            --         return true
+            --     end
+            -- end
         end
     elseif info.classID == 19 then
         -- 专业材料
@@ -48,6 +52,10 @@ end
 
 function Category:GetCategory(itemID)
     local info = Addon:GetItemInfo(itemID)
+
+    if info.bindType ~= 0 then
+        return 0
+    end
 
     if (info.classID == 0) then
         -- 药水/合剂
