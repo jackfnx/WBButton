@@ -5,6 +5,7 @@ local BAG_ID_LIST = {
     account = { 12, 13, 14, 15, 16 }
 }
 
+-- 取得某一类或几类背包的SLOTS_NUM
 function Addon:GetSlotsNum(...)
     local slotsNum = {}
     for i = 1, select('#', ...) do
@@ -18,6 +19,7 @@ function Addon:GetSlotsNum(...)
     return slotsNum
 end
 
+-- 在某一类背包里，根据SLOTS_NUM，查找第i个格子是第几个背包的第几个格子
 function Addon:GetSlot(arg, slotsNum, i)
     local bags = BAG_ID_LIST[arg]
     for j, num in ipairs(slotsNum) do
@@ -32,6 +34,7 @@ function Addon:GetSlot(arg, slotsNum, i)
     return -1, -1
 end
 
+-- 更新列表中物品的格子
 function Addon:UpdateItem(items, bag, slot, newBag, newSlot)
     for _, item in ipairs(items) do
         if item.bag == bag and item.slot == slot then
@@ -42,6 +45,7 @@ function Addon:UpdateItem(items, bag, slot, newBag, newSlot)
     end
 end
 
+-- 根据格子，从列表里删除物品
 function Addon:DeleteItem(items, bag, slot)
     for i, item in ipairs(items) do
         if item.bag == bag and item.slot == slot then
@@ -51,6 +55,7 @@ function Addon:DeleteItem(items, bag, slot)
     end
 end
 
+-- 格子是否在列表里
 function Addon:SlotInList(items, bag, slot)
     for _, item in ipairs(items) do
         if item.bag == bag and item.slot == slot then
