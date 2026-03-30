@@ -17,7 +17,6 @@ function Settings:CreateConfigUI()
     configFrame:SetPoint("CENTER")
     configFrame.backdropInfo = {
         bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background", -- 131071
-        -- edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",     -- 131072
         tile     = true,
         tileSize = 32,
         edgeSize = 32,
@@ -40,6 +39,9 @@ function Settings:CreateConfigUI()
     titleBg:SetHeight(24)
     titleBg:SetColorTexture(0, 0, 0, 0.6)
 
+    local close = CreateFrame("Button", nil, configFrame, "UIPanelCloseButton")
+    close:SetPoint("TOPRIGHT", -8, -8)
+
     -- 标题
     local title = configFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -10)
@@ -48,32 +50,14 @@ function Settings:CreateConfigUI()
     -- ESC 关闭
     table.insert(UISpecialFrames, "WB_ConfigFrame")
 
-    -- Cancel
-    local cancel = CreateFrame("Button", nil, configFrame, "UIPanelButtonTemplate")
-    cancel:SetSize(80, 25)
-    cancel:SetPoint("BOTTOMRIGHT", -10, 10)
-    cancel:SetText("Cancel")
-    cancel:SetScript("OnClick", function()
-        configFrame:Hide()
-    end)
-
-    -- OK
-    local ok = CreateFrame("Button", nil, configFrame, "UIPanelButtonTemplate")
-    ok:SetSize(80, 25)
-    ok:SetPoint("BOTTOMRIGHT", -10, 10)
-    ok:SetPoint("RIGHT", cancel, "LEFT", -10, 0)
-    ok:SetText("OK")
-    ok:SetScript("OnClick", function()
-        configFrame:Hide()
-    end)
-
     -- 滚动区域
     local scroll = CreateFrame("ScrollFrame", nil, configFrame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 10, -40)
-    scroll:SetPoint("BOTTOMRIGHT", cancel, "TOPRIGHT", -24, 15)
+    scroll:SetPoint("BOTTOMRIGHT", configFrame, "BOTTOMRIGHT", -36, 15)
 
     local content = CreateFrame("Frame", nil, scroll)
-    content:SetSize(260, 1)
+    content:SetSize(780, 1)
+    content:SetPoint("TOPLEFT", 4, 0)
     scroll:SetScrollChild(content)
 
     configFrame:Hide()
@@ -85,6 +69,7 @@ function Settings:CreateConfigUI()
     configFrame.nodes = {}
 
     Settings.ConfigDialog = configFrame
+    Settings.TreeData = { Addon.Category:BuildNodeTree() }
 end
 
 function Settings:Execute()
@@ -93,103 +78,124 @@ function Settings:Execute()
 end
 
 -- ======================
--- 树数据
--- ======================
-Settings.TreeData = {
-    {
-        text = "材料",
-        children = {
-            {
-                text = "Dragonflight",
-                expansionID = 9,
-                children = {
-                    { text = "草药", classID = 7, subclassID = 9 },
-                    { text = "矿石", classID = 7, subclassID = 0 },
-                }
-            },
-            {
-                text = "The War Within",
-                expansionID = 10,
-                children = {
-                    { text = "草药", classID = 7, subclassID = 9 },
-                    { text = "矿石", classID = 7, subclassID = 0 },
-                }
-            }
-        }
-    }
-}
-
--- ======================
 -- 创建节点
 -- ======================
 function Settings:CreateNode(parent, node, level, y)
-    local btn = CreateFrame("Button", nil, parent)
-    btn:SetSize(260, 20)
-    btn:SetPoint("TOPLEFT", 10 + level * 15, y)
+    local row = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    row:SetHeight(24)
+    row:SetPoint("TOPLEFT", 10 + level * 15, y)
+    row:SetPoint("RIGHT", parent, "RIGHT", -36, 0)
+
+    row:SetBackdrop({
+        bgFile   = "Interface\\ChatFrame\\ChatFrameBackground", -- 简单纯色
+        edgeFile = nil,
+        edgeSize = 0,
+        insets   = { left = 0, right = 0, top = 0, bottom = 0 }
+    })
+    local color = (y % 48 > 24) and { 0, 0, 0, 0.2 } or { 0, 0, 0, 0.1 } -- 隔行变色
+    row:SetBackdropColor(unpack(color))                                  -- {r,g,b,a}
+
+    local btn = CreateFrame("Button", nil, row)
+    btn:SetPoint("TOPLEFT", row, 0, 2)
+    btn:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    btn:SetHeight(20)
 
     -- 文本
     btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     btn.text:SetPoint("LEFT")
 
     -- 展开状态
-    node.expanded = node.expanded or false
+    node.Expanded = node.Expanded or false
 
-    if node.children then
-        btn.text:SetText((node.expanded and "- " or "+ ") .. node.text)
+    if node.Children and #node.Children > 0 then
+        btn.text:SetText((node.Expanded and "- " or "+ ") .. node.Text)
     else
-        btn.text:SetText(node.text)
+        btn.text:SetText(node.Text)
     end
 
     -- 点击展开
     btn:SetScript("OnClick", function()
-        if node.children then
-            node.expanded = not node.expanded
+        if node.Children then
+            node.Expanded = not node.Expanded
             Settings:RefreshTree()
         end
     end)
 
-    -- 叶子节点加 checkbox
-    if not node.children then
+
+    if node.IsManual then
+        -- 拖拽区域
+        local dropText = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        dropText:SetPoint("RIGHT", row, "RIGHT", -10, 0)
+        dropText:SetText("把物品拖到这里")
+
+        -- ======================
+        -- 处理拖拽
+        -- ======================
+        row:EnableMouse(true)
+        row:RegisterForDrag("LeftButton")
+
+        function AddManualItem(itemID)
+            local info = Addon:GetItemInfo(itemID)
+            local newNode = Addon.Category.NewNode(info.itemName, info.itemID, node.Val)
+            table.insert(node.Children, newNode)
+            Settings:RefreshTree()
+        end
+
+        btn:SetScript("OnReceiveDrag", function()
+            local type, itemID, link = GetCursorInfo()
+
+            if type == "item" and itemID then
+                AddManualItem(itemID)
+            end
+
+            ClearCursor()
+        end)
+
+        btn:SetScript("OnMouseUp", function()
+            local type, itemID, link = GetCursorInfo()
+
+            if type == "item" and itemID then
+                AddManualItem(itemID)
+            end
+
+            ClearCursor()
+        end)
+    else
+        -- 加 checkbox
         local check = CreateFrame("CheckButton", nil, btn, "UICheckButtonTemplate")
         check:SetPoint("RIGHT")
 
         -- 初始化状态
-        local exp = node.expansionID or node.parentExp
-        local sub = node.subclassID
+        -- local exp = node.expansionID or node.parentExp
+        -- local sub = node.subclassID
 
-        if Settings.Config.include[exp] and Settings.Config.include[exp][sub] then
-            check:SetChecked(true)
-        end
+        -- if Settings.Config.include[exp] and Settings.Config.include[exp][sub] then
+        --     check:SetChecked(true)
+        -- end
 
         check:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
 
-            Settings.Config.include[exp] = Settings.Config.include[exp] or {}
-            Settings.Config.include[exp][sub] = checked
+            -- Settings.Config.include[exp] = Settings.Config.include[exp] or {}
+            -- Settings.Config.include[exp][sub] = checked
         end)
     end
 
-    return btn
+    return row
 end
 
 -- ======================
 -- 渲染树（递归）
 -- ======================
-function Settings:RenderTree(parent, nodes, level, y, parentExp)
+function Settings:RenderTree(parent, nodes, level, y)
     for _, node in ipairs(nodes) do
-        if node.expansionID then
-            parentExp = node.expansionID
-        end
-
-        node.parentExp = parentExp
-
         local btn = self:CreateNode(parent, node, level, y)
         table.insert(Settings.ConfigDialog.nodes, btn)
 
-        y = y - 22
+        y = y - 26
 
-        if node.expanded and node.children then
-            y = self:RenderTree(parent, node.children, level + 1, y, parentExp)
+        if node.Expanded and node.Children then
+            y = self:RenderTree(parent, node.Children, level + 1, y)
         end
     end
 
@@ -208,7 +214,7 @@ function Settings:RefreshTree()
     end
     frame.nodes = {}
 
-    local finalY = self:RenderTree(frame.content, self.TreeData, 0, -10)
+    local finalY = self:RenderTree(content, self.TreeData, 0, -10)
     content:SetHeight(-finalY + 10)
 end
 

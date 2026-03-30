@@ -96,27 +96,6 @@ function Addon:GetItems(yn, ...)
     return unpack(items)
 end
 
-Addon.ExpansionNames = {
-    [0] = "经典旧世",
-    [1] = "燃烧的远征",
-    [2] = "巫妖王之怒",
-    [3] = "大地的裂变",
-    [4] = "熊猫人之谜",
-    [5] = "德拉诺之王",
-    [6] = "军团再临",
-    [7] = "争霸艾泽拉斯",
-    [8] = "暗影国度",
-    [9] = "巨龙时代",
-    [10] = "地心之战",
-    [11] = "至暗之夜",
-    [12] = "最后的泰坦"
-}
-
--- 使用函数封装
-function Addon:GetExpansionName(id)
-    return self.ExpansionNames[id] or "未知资料片"
-end
-
 function Addon:GetItemInfo(itemID, ls)
     local values = { C_Item.GetItemInfo(itemID) }
     local info = {
@@ -165,5 +144,5 @@ function Addon:ItemStr(itemID, itemInfo)
         itemInfo = self:GetItemInfo(itemID)
     end
     return string.format("%s[%d], %s, %s", itemInfo.itemName, itemID, itemInfo.itemSubType,
-        self:GetExpansionName(itemInfo.expansionID))
+        Addon.Category:GetExpansionName(itemInfo.expansionID))
 end
