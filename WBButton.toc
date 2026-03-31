@@ -7,6 +7,7 @@
 ## Notes-zhCN: 战团银行按钮
 ## Category: Bags
 ## IconTexture: 133233
+## SavedVariables: WBB_Characters, WBB_Config
 
 WBButton.lua
 WBItems.lua

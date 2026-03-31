@@ -39,12 +39,33 @@ Addon.Frame:RegisterEvent("BANKFRAME_CLOSED")
 function Addon.Frame:PLAYER_LOGIN()
     -- 等完全初始化
     Delay(1, function()
+        WBB_Characters = WBB_Characters or {}
+        WBB_Config = WBB_Config or {}
+        Addon:RegisterCurrentCharacter()
+
         Addon.Frame:CreateToolbar()
         Addon.Frame:CreateProgressBar()
         Addon.Settings:InitConfig()
         Addon.Settings:CreateConfigUI()
         Addon.Widget:CreateItemWidgetUI()
     end)
+end
+
+function Addon:GetCurrentCharacter()
+    local name = UnitName("player")
+    local realm = GetRealmName()
+    return name .. "-" .. realm
+end
+
+function Addon:RegisterCurrentCharacter()
+    local key = self:GetCurrentCharacter()
+    local count = 0
+    for _ in pairs(WBB_Characters) do
+        count = count + 1
+    end
+    if WBB_Characters[key] == nil then
+        WBB_Characters[key] = count
+    end
 end
 
 function Addon.Frame.BANKFRAME_OPENED(...)

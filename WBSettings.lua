@@ -77,6 +77,12 @@ function Settings:Execute()
     Settings.ConfigDialog:Show()
 end
 
+Settings.MODE = {
+    NONE = 1, --不存入
+    ALL = 2,  --全部存入
+    ONE = 3,  --集中角色
+}
+
 -- ======================
 -- 创建节点
 -- ======================
@@ -97,8 +103,7 @@ function Settings:CreateNode(parent, node, level, y)
 
     local btn = CreateFrame("Button", nil, row)
     btn:SetPoint("TOPLEFT", row, 0, 2)
-    btn:SetPoint("RIGHT", row, "RIGHT", 0, 0)
-    btn:SetHeight(20)
+    btn:SetSize(120, 20)
 
     -- 文本
     btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -134,15 +139,17 @@ function Settings:CreateNode(parent, node, level, y)
         row:EnableMouse(true)
         row:RegisterForDrag("LeftButton")
 
-        function AddManualItem(itemID)
+        local function AddManualItem(itemID)
             local info = Addon:GetItemInfo(itemID)
             local newNode = Addon.Category.NewNode(info.itemName, info.itemID, node.Val)
+            print(3, newNode.Text, newNode.Val)
             table.insert(node.Children, newNode)
             Settings:RefreshTree()
         end
 
-        btn:SetScript("OnReceiveDrag", function()
+        row:SetScript("OnReceiveDrag", function()
             local type, itemID, link = GetCursorInfo()
+            print(1, type, itemID, link)
 
             if type == "item" and itemID then
                 AddManualItem(itemID)
@@ -151,8 +158,9 @@ function Settings:CreateNode(parent, node, level, y)
             ClearCursor()
         end)
 
-        btn:SetScript("OnMouseUp", function()
+        row:SetScript("OnMouseUp", function()
             local type, itemID, link = GetCursorInfo()
+            print(2, type, itemID, link)
 
             if type == "item" and itemID then
                 AddManualItem(itemID)
@@ -161,24 +169,109 @@ function Settings:CreateNode(parent, node, level, y)
             ClearCursor()
         end)
     else
-        -- 加 checkbox
-        local check = CreateFrame("CheckButton", nil, btn, "UICheckButtonTemplate")
-        check:SetPoint("RIGHT")
+        local function CreateRadio(radio_parent, text, val, prev)
+            local r = CreateFrame("CheckButton", nil, radio_parent, "UICheckButtonTemplate")
+            r.text:SetText(text)
+            r.text:ClearAllPoints()
+            if prev == nil then
+                r.text:SetPoint("RIGHT", radio_parent, "RIGHT", -10, 0)
+            else
+                r.text:SetPoint("RIGHT", prev, "LEFT", -5, 0)
+            end
 
-        -- 初始化状态
-        -- local exp = node.expansionID or node.parentExp
-        -- local sub = node.subclassID
+            r:ClearAllPoints()
+            r:SetPoint("RIGHT", r.text, "LEFT", -1, 0)
+            r.val = val
 
-        -- if Settings.Config.include[exp] and Settings.Config.include[exp][sub] then
-        --     check:SetChecked(true)
-        -- end
+            return r
+        end
 
-        check:SetScript("OnClick", function(self)
-            local checked = self:GetChecked()
+        local function radiosSelect(radios, currVal)
+            for r_val in pairs(radios) do
+                radios[r_val]:SetChecked(r_val == currVal)
+            end
+        end
 
-            -- Settings.Config.include[exp] = Settings.Config.include[exp] or {}
-            -- Settings.Config.include[exp][sub] = checked
+        local function CreateRadios(radio_parent, rs, OnSelectedChanged)
+            local radios = {}
+            local prev = nil
+            for _, info in ipairs(rs) do
+                local r = CreateRadio(radio_parent, info[1], info[2], prev)
+                radios[r.val] = r
+                prev = r
+            end
+
+            local function Select(v)
+                radiosSelect(radios, v)
+                OnSelectedChanged(v)
+            end
+
+            for r_val in pairs(radios) do
+                radios[r_val]:SetScript("OnClick", function() Select(r_val) end)
+            end
+
+            return radios
+        end
+
+        local function OnSelectedChanged(val)
+            if (val == self.MODE.ONE) then
+                row.dropdown:Show()
+                local to = row.dropdown.selected
+                WBB_Config[node.Val] = { val = val, to = to }
+            elseif (val == self.MODE.ALL) then
+                row.dropdown:Hide()
+                WBB_Config[node.Val] = { val = val }
+            else
+                row.dropdown:Hide()
+                WBB_Config[node.Val] = nil
+            end
+        end
+
+        local radios = CreateRadios(row,
+            { { "不存入", self.MODE.NONE }, { "全存入", self.MODE.ALL }, { "集中到", self.MODE.ONE }, },
+            OnSelectedChanged
+        )
+
+        row.dropdown = CreateFrame("Frame", nil, row, "UIDropDownMenuTemplate")
+        row.dropdown:SetPoint("RIGHT", radios[self.MODE.ONE], "LEFT", -2, 0)
+
+        local function dropboxSelectItem(name)
+            UIDropDownMenu_SetSelectedName(row.dropdown, name)
+            row.dropdown.selected = name
+            if row.dropdown.onSelectedChanged then
+                row.dropdown:onSelectedChanged(name)
+            end
+        end
+
+        UIDropDownMenu_SetWidth(row.dropdown, 120)
+        UIDropDownMenu_Initialize(row.dropdown, function(self_, level_)
+            local chars = {}
+            for name in pairs(WBB_Characters) do
+                chars[WBB_Characters[name] + 1] = name
+            end
+            for _, name in ipairs(chars) do
+                local info = UIDropDownMenu_CreateInfo()
+                info.text = name
+                info.value = name
+                info.func = function() dropboxSelectItem(name) end
+                UIDropDownMenu_AddButton(info)
+            end
         end)
+
+
+        local function onDropdownSelectedChanged(self_, name)
+            if radios[self.MODE.ONE]:GetChecked() then
+                WBB_Config[node.Val] = { val = self.MODE.ONE, to = name }
+            end
+        end
+
+        row.dropdown.onSelectedChanged = onDropdownSelectedChanged
+
+        local curr = WBB_Config[node.Val] and WBB_Config[node.Val] or { val = self.MODE.NONE }
+        local to = curr.to or Addon:GetCurrentCharacter()
+        dropboxSelectItem(to)
+        radiosSelect(radios, curr.val)
+        OnSelectedChanged(curr.val)
     end
 
     return row
