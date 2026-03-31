@@ -101,21 +101,40 @@ function Settings:CreateNode(parent, node, level, y)
     row:SetBackdropColor(unpack(color))                                  -- {r,g,b,a}
 
     local btn = CreateFrame("Button", nil, row)
-    btn:SetPoint("TOPLEFT", row, 0, 2)
+    btn:SetPoint("LEFT", row, 0, 0)
     btn:SetSize(120, 20)
-
-    -- 文本
-    btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    btn.text:SetPoint("LEFT")
 
     -- 展开状态
     node.Expanded = node.Expanded or false
 
-    if node.Children and #node.Children > 0 then
-        btn.text:SetText((node.Expanded and "- " or "+ ") .. node.Text)
+    -- +/-
+    local toggle = btn:CreateTexture(nil, "ARTWORK")
+    toggle:SetSize(12, 12)
+    toggle:SetPoint("LEFT", btn, "LEFT", 0, 0)
+
+    if not node.Children or #node.Children == 0 then
+        toggle:SetTexture(nil)
+    elseif node.Expanded then
+        toggle:SetTexture("Interface\\Buttons\\UI-MinusButton-Up")
     else
-        btn.text:SetText(node.Text)
+        toggle:SetTexture("Interface\\Buttons\\UI-PlusButton-Up")
     end
+
+    -- 图标
+    local icon = btn:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(16, 16)
+    icon:SetPoint("LEFT", toggle, "RIGHT", 0, 0)
+
+    if node.Icon then
+        icon:SetTexture(node.Icon)
+    else
+        icon:SetTexture(nil)
+    end
+
+    -- 文本
+    btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    btn.text:SetPoint("LEFT", icon, "RIGHT", 0, 0)
+    btn.text:SetText(node.Text)
 
     -- 点击展开
     btn:SetScript("OnClick", function()
@@ -264,7 +283,6 @@ function Settings:CreateNode(parent, node, level, y)
                 UIDropDownMenu_AddButton(info)
             end
         end)
-
 
         local function onDropdownSelectedChanged(self_, name)
             if radios[self.SAVE2.ONE]:GetChecked() then

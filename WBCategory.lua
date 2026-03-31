@@ -64,13 +64,14 @@ Addon.NODE = {
     ACTIVE = 5, --真正可以设置的分类节点
 }
 
-function Category:NewNode(text, val, parent, expanded, nodeType)
+function Category:NewNode(text, val, icon, parent, expanded, nodeType)
     -- 如果第一个参数是 table → 命名参数
     if type(text) == "table" then
         local args = text
 
         text       = args.text
         val        = args.val
+        icon       = args.icon
         parent     = args.parent
         expanded   = args.expanded
         nodeType   = args.nodeType
@@ -79,6 +80,7 @@ function Category:NewNode(text, val, parent, expanded, nodeType)
     return {
         Text = text,
         Val = parent and (parent * 100 + val) or val,
+        Icon = icon,
         Children = {},
         Expanded = expanded,
         NodeType = nodeType or Addon.NODE.NORMAL,
@@ -136,6 +138,7 @@ function Category:BuildNodeTree(tree, level)
                 local child = Category:NewNode(
                     info.itemName,
                     v,
+                    info.itemTexture,
                     tree.Val,
                     false,
                     Addon.NODE.ITEM
@@ -150,6 +153,7 @@ function Category:BuildNodeTree(tree, level)
             local child = Category:NewNode(
                 nodePrototype.Text,
                 nodePrototype.Val,
+                nil,
                 tree.Val,
                 false,
                 nodePrototype.NodeType)
