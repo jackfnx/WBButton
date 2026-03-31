@@ -5,10 +5,9 @@ local Settings = Addon.Settings
 -- 初始化配置
 -- ======================
 function Settings:InitConfig()
-    WB_Config = WB_Config or {}
-    WB_Config.include = WB_Config.include or {}
+    WBB_Config = WBB_Config or {}
 
-    Settings.Config = WB_Config
+    Settings.Config = WBB_Config
 end
 
 function Settings:CreateConfigUI()
@@ -77,7 +76,7 @@ function Settings:Execute()
     Settings.ConfigDialog:Show()
 end
 
-Settings.MODE = {
+Settings.SAVE2 = {
     NONE = 1, --不存入
     ALL = 2,  --全部存入
     ONE = 3,  --集中角色
@@ -126,49 +125,57 @@ function Settings:CreateNode(parent, node, level, y)
         end
     end)
 
+    if node.NodeType == Addon.NODE.ANCHOR then
+        local drop = CreateFrame("Frame", nil, row, "BackdropTemplate")
+        drop:SetPoint("TOPLEFT", row, "TOP", 0, 0)
+        drop:SetPoint("BOTTOMRIGHT", 0, "BOTTOMRIGHT", 0, 0)
 
-    if node.IsManual then
+        drop:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8"
+        })
+        drop:SetBackdropColor(0, 0, 0, 0.9)
+
         -- 拖拽区域
-        local dropText = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        dropText:SetPoint("RIGHT", row, "RIGHT", -10, 0)
+        local dropText = drop:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        dropText:SetPoint("CENTER", drop, "CENTER", 0, 0)
         dropText:SetText("把物品拖到这里")
 
         -- ======================
         -- 处理拖拽
         -- ======================
-        row:EnableMouse(true)
-        row:RegisterForDrag("LeftButton")
+        drop:EnableMouse(true)
+        drop:RegisterForDrag("LeftButton")
 
-        local function AddManualItem(itemID)
-            local info = Addon:GetItemInfo(itemID)
-            local newNode = Addon.Category.NewNode(info.itemName, info.itemID, node.Val)
-            print(3, newNode.Text, newNode.Val)
-            table.insert(node.Children, newNode)
+        local function AddItem(itemID)
+            -- local info = Addon:GetItemInfo(itemID)
+            WBB_Config[node.Val] = WBB_Config[node.Val] or { curr = 0 }
+            WBB_Config[node.Val].curr = WBB_Config[node.Val].curr or 0
+            WBB_Config[node.Val][itemID] = WBB_Config[node.Val].curr
+            WBB_Config[node.Val].curr = WBB_Config[node.Val].curr + 1
+            Settings.TreeData = { Addon.Category:BuildNodeTree() }
             Settings:RefreshTree()
         end
 
-        row:SetScript("OnReceiveDrag", function()
+        drop:SetScript("OnReceiveDrag", function()
             local type, itemID, link = GetCursorInfo()
-            print(1, type, itemID, link)
 
             if type == "item" and itemID then
-                AddManualItem(itemID)
+                AddItem(itemID)
             end
 
             ClearCursor()
         end)
 
-        row:SetScript("OnMouseUp", function()
+        drop:SetScript("OnMouseUp", function()
             local type, itemID, link = GetCursorInfo()
-            print(2, type, itemID, link)
 
             if type == "item" and itemID then
-                AddManualItem(itemID)
+                AddItem(itemID)
             end
 
             ClearCursor()
         end)
-    else
+    elseif node.NodeType == Addon.NODE.ACTIVE or node.NodeType == Addon.NODE.ITEM then
         local function CreateRadio(radio_parent, text, val, prev)
             local r = CreateFrame("CheckButton", nil, radio_parent, "UICheckButtonTemplate")
             r.text:SetText(text)
@@ -214,11 +221,11 @@ function Settings:CreateNode(parent, node, level, y)
         end
 
         local function OnSelectedChanged(val)
-            if (val == self.MODE.ONE) then
+            if (val == self.SAVE2.ONE) then
                 row.dropdown:Show()
                 local to = row.dropdown.selected
                 WBB_Config[node.Val] = { val = val, to = to }
-            elseif (val == self.MODE.ALL) then
+            elseif (val == self.SAVE2.ALL) then
                 row.dropdown:Hide()
                 WBB_Config[node.Val] = { val = val }
             else
@@ -228,12 +235,12 @@ function Settings:CreateNode(parent, node, level, y)
         end
 
         local radios = CreateRadios(row,
-            { { "不存入", self.MODE.NONE }, { "全存入", self.MODE.ALL }, { "集中到", self.MODE.ONE }, },
+            { { "不存入", self.SAVE2.NONE }, { "全存入", self.SAVE2.ALL }, { "集中到", self.SAVE2.ONE }, },
             OnSelectedChanged
         )
 
         row.dropdown = CreateFrame("Frame", nil, row, "UIDropDownMenuTemplate")
-        row.dropdown:SetPoint("RIGHT", radios[self.MODE.ONE], "LEFT", -2, 0)
+        row.dropdown:SetPoint("RIGHT", radios[self.SAVE2.ONE], "LEFT", -2, 0)
 
         local function dropboxSelectItem(name)
             UIDropDownMenu_SetSelectedName(row.dropdown, name)
@@ -260,14 +267,14 @@ function Settings:CreateNode(parent, node, level, y)
 
 
         local function onDropdownSelectedChanged(self_, name)
-            if radios[self.MODE.ONE]:GetChecked() then
-                WBB_Config[node.Val] = { val = self.MODE.ONE, to = name }
+            if radios[self.SAVE2.ONE]:GetChecked() then
+                WBB_Config[node.Val] = { val = self.SAVE2.ONE, to = name }
             end
         end
 
         row.dropdown.onSelectedChanged = onDropdownSelectedChanged
 
-        local curr = WBB_Config[node.Val] and WBB_Config[node.Val] or { val = self.MODE.NONE }
+        local curr = WBB_Config[node.Val] and WBB_Config[node.Val] or { val = self.SAVE2.NONE }
         local to = curr.to or Addon:GetCurrentCharacter()
         dropboxSelectItem(to)
         radiosSelect(radios, curr.val)

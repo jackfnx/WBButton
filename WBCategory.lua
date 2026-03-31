@@ -56,7 +56,15 @@ function Category:GetExpansionName(id)
     -- return string.rep(" ", spaceBefore) .. iconString .. expName
 end
 
-function Category:NewNode(text, val, parent, expanded, isManual)
+Addon.NODE = {
+    ROOT = 1,   --根节点
+    ANCHOR = 2, --手工锚节点
+    ITEM = 3,   --手工物品节点
+    NORMAL = 4, --普通过路节点
+    ACTIVE = 5, --真正可以设置的分类节点
+}
+
+function Category:NewNode(text, val, parent, expanded, nodeType)
     -- 如果第一个参数是 table → 命名参数
     if type(text) == "table" then
         local args = text
@@ -65,7 +73,7 @@ function Category:NewNode(text, val, parent, expanded, isManual)
         val        = args.val
         parent     = args.parent
         expanded   = args.expanded
-        isManual   = args.isManual
+        nodeType   = args.nodeType
     end
 
     return {
@@ -73,40 +81,40 @@ function Category:NewNode(text, val, parent, expanded, isManual)
         Val = parent and (parent * 100 + val) or val,
         Children = {},
         Expanded = expanded,
-        IsManual = isManual,
+        NodeType = nodeType or Addon.NODE.NORMAL,
     }
 end
 
 local TopClass = {
-    TopPriority = Category:NewNode { text = "优先特殊物品", val = 0, isManual = true },
-    Material = Category:NewNode { text = "材料", val = 1 },
-    BottomPriority = Category:NewNode { text = "低优先级杂物", val = 2, isManual = true },
+    TopPriority = Category:NewNode { text = "优先特殊物品", val = 0, nodeType = Addon.NODE.ANCHOR },
+    Material = Category:NewNode { text = "材料", val = 1, nodeType = Addon.NODE.NORMAL },
+    BottomPriority = Category:NewNode { text = "低优先级杂物", val = 2, nodeType = Addon.NODE.ANCHOR },
 }
 
 local MaterialClass = {
-    BanBenTeShu = Category:NewNode("版本特殊物品", 0),
-    JinShu = Category:NewNode("矿/金属", 1),
-    Cao = Category:NewNode("草药", 2),
-    Pi = Category:NewNode("皮", 3),
-    Bu = Category:NewNode("布", 4),
-    FuMo = Category:NewNode("附魔材料", 5),
-    GongCheng = Category:NewNode("工程半成品", 6),
-    MingWen = Category:NewNode("铭文半成品", 7),
-    YuanSu = Category:NewNode("元素", 8),
-    Yao = Category:NewNode("药剂/药水", 9),
+    BanBenTeShu = Category:NewNode { text = "版本特殊物品", val = 0, nodeType = Addon.NODE.NORMAL },
+    JinShu = Category:NewNode { text = "矿/金属", val = 1, nodeType = Addon.NODE.NORMAL },
+    Cao = Category:NewNode { text = "草药", val = 2, nodeType = Addon.NODE.NORMAL },
+    Pi = Category:NewNode { text = "皮", val = 3, nodeType = Addon.NODE.NORMAL },
+    Bu = Category:NewNode { text = "布", val = 4, nodeType = Addon.NODE.NORMAL },
+    FuMo = Category:NewNode { text = "附魔材料", val = 5, nodeType = Addon.NODE.NORMAL },
+    GongCheng = Category:NewNode { text = "工程半成品", val = 6, nodeType = Addon.NODE.NORMAL },
+    MingWen = Category:NewNode { text = "铭文半成品", val = 7, nodeType = Addon.NODE.NORMAL },
+    YuanSu = Category:NewNode { text = "元素", val = 8, nodeType = Addon.NODE.NORMAL },
+    Yao = Category:NewNode { text = "药剂/药水", val = 9, nodeType = Addon.NODE.NORMAL },
 }
 
 local ExpansionClass = (function()
     local t = {}
     for i = 0, CURRENT_EXP do
-        t[i] = Category:NewNode(Category:GetExpansionName(i), i)
+        t[i] = Category:NewNode { text = Category:GetExpansionName(i), val = i, nodeType = Addon.NODE.ACTIVE }
     end
     return t
 end)()
 
 local LeafClass = {
-    PuTong = Category:NewNode("普通", 0),
-    TeShu = Category:NewNode("特殊", 1),
+    PuTong = Category:NewNode { text = "普通", val = 0, nodeType = Addon.NODE.ACTIVE },
+    TeShu = Category:NewNode { text = "特殊", val = 1, nodeType = Addon.NODE.ACTIVE },
 }
 
 local ClassLevel = {
@@ -114,20 +122,38 @@ local ClassLevel = {
 }
 
 function Category:BuildNodeTree(tree, level)
-    tree = tree or Category:NewNode { text = "物品", val = 0, expanded = true }
+    tree = tree or Category:NewNode { text = "物品", val = 0, expanded = true, nodeType = Addon.NODE.ROOT }
     level = level or 1
     if ClassLevel[level] == nil then
         return
     end
-    for _, nodePrototype in pairs(ClassLevel[level]) do
-        local child = Category:NewNode(
-            nodePrototype.Text,
-            nodePrototype.Val,
-            tree.Val,
-            false,
-            nodePrototype.IsManual)
-        table.insert(tree.Children, child)
-        if not child.IsManual then
+    if tree.NodeType == Addon.NODE.ANCHOR then
+        local items = WBB_Config[tree.Val] or {}
+        for itemID in pairs(items) do
+            if type(itemID) == "number" then
+                local v = items[itemID]
+                local info = Addon:GetItemInfo(itemID)
+                local child = Category:NewNode(
+                    info.itemName,
+                    v,
+                    tree.Val,
+                    false,
+                    Addon.NODE.ITEM
+                )
+                table.insert(tree.Children, child)
+            end
+        end
+    elseif tree.NodeType == Addon.NODE.ITEM then
+        -- no child
+    else
+        for _, nodePrototype in pairs(ClassLevel[level]) do
+            local child = Category:NewNode(
+                nodePrototype.Text,
+                nodePrototype.Val,
+                tree.Val,
+                false,
+                nodePrototype.NodeType)
+            table.insert(tree.Children, child)
             self:BuildNodeTree(child, level + 1)
         end
     end
