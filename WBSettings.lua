@@ -171,7 +171,7 @@ function Settings:CreateNode(parent, node, level, y)
             WBB_Config[node.Val].curr = WBB_Config[node.Val].curr or 0
             WBB_Config[node.Val][itemID] = WBB_Config[node.Val].curr
             WBB_Config[node.Val].curr = WBB_Config[node.Val].curr + 1
-            Settings.TreeData = { Addon.Category:BuildNodeTree() }
+            Settings.TreeData = { Addon.Category:BuildNodeTree(nil, nil, node.Val) }
             Settings:RefreshTree()
         end
 
@@ -218,9 +218,8 @@ function Settings:CreateNode(parent, node, level, y)
             end
         end
 
-        local function CreateRadios(radio_parent, rs, OnSelectedChanged)
+        local function CreateRadios(radio_parent, rs, prev, OnSelectedChanged)
             local radios = {}
-            local prev = nil
             for _, info in ipairs(rs) do
                 local r = CreateRadio(radio_parent, info[1], info[2], prev)
                 radios[r.val] = r
@@ -253,10 +252,31 @@ function Settings:CreateNode(parent, node, level, y)
             end
         end
 
-        local radios = CreateRadios(row,
-            { { "不存入", self.SAVE2.NONE }, { "全存入", self.SAVE2.ALL }, { "集中到", self.SAVE2.ONE }, },
-            OnSelectedChanged
-        )
+        local radios = {}
+        if node.NodeType == Addon.NODE.ITEM then
+            local btnDel = CreateFrame("Button", nil, row)
+            btnDel:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+            btnDel:SetSize(16, 16)
+            btnDel:SetNormalTexture("Interface\\Buttons\\UI-StopButton")
+
+            btnDel:SetScript("OnClick", function()
+                local pNodeVal = node:SelfDelete()
+                Settings.TreeData = { Addon.Category:BuildNodeTree(nil, nil, pNodeVal) }
+                Settings:RefreshTree()
+            end)
+
+            radios = CreateRadios(row,
+                { { "全存入", self.SAVE2.ALL }, { "集中到", self.SAVE2.ONE } },
+                btnDel,
+                OnSelectedChanged
+            )
+        elseif node.NodeType == Addon.NODE.ACTIVE then
+            radios = CreateRadios(row,
+                { { "不存入", self.SAVE2.NONE }, { "全存入", self.SAVE2.ALL }, { "集中到", self.SAVE2.ONE } },
+                nil,
+                OnSelectedChanged
+            )
+        end
 
         row.dropdown = CreateFrame("Frame", nil, row, "UIDropDownMenuTemplate")
         row.dropdown:SetPoint("RIGHT", radios[self.SAVE2.ONE], "LEFT", -2, 0)
@@ -292,7 +312,13 @@ function Settings:CreateNode(parent, node, level, y)
 
         row.dropdown.onSelectedChanged = onDropdownSelectedChanged
 
-        local curr = WBB_Config[node.Val] and WBB_Config[node.Val] or { val = self.SAVE2.NONE }
+        local defVal = {}
+        if node.NodeType == Addon.NODE.ACTIVE then
+            defVal = { val = self.SAVE2.NONE }
+        elseif node.NodeType == Addon.NODE.ITEM then
+            defVal = { val = self.SAVE2.ALL }
+        end
+        local curr = WBB_Config[node.Val] and WBB_Config[node.Val] or defVal
         local to = curr.to or Addon:GetCurrentCharacter()
         dropboxSelectItem(to)
         radiosSelect(radios, curr.val)

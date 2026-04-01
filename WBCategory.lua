@@ -88,28 +88,28 @@ function Category:NewNode(text, val, icon, parent, expanded, nodeType)
 end
 
 local TopClass = {
-    TopPriority = Category:NewNode { text = "优先特殊物品", val = 0, nodeType = Addon.NODE.ANCHOR },
-    Material = Category:NewNode { text = "材料", val = 1, nodeType = Addon.NODE.NORMAL },
-    BottomPriority = Category:NewNode { text = "低优先级杂物", val = 2, nodeType = Addon.NODE.ANCHOR },
+    TopPriority = Category:NewNode { text = "优先特殊物品", val = 2, nodeType = Addon.NODE.ANCHOR },
+    Material = Category:NewNode { text = "材料", val = 3, nodeType = Addon.NODE.NORMAL },
+    BottomPriority = Category:NewNode { text = "低优先级杂物", val = 5, nodeType = Addon.NODE.ANCHOR },
 }
 
 local MaterialClass = {
-    BanBenTeShu = Category:NewNode { text = "版本特殊物品", val = 0, nodeType = Addon.NODE.NORMAL },
-    JinShu = Category:NewNode { text = "矿/金属", val = 1, nodeType = Addon.NODE.NORMAL },
-    Cao = Category:NewNode { text = "草药", val = 2, nodeType = Addon.NODE.NORMAL },
-    Pi = Category:NewNode { text = "皮", val = 3, nodeType = Addon.NODE.NORMAL },
-    Bu = Category:NewNode { text = "布", val = 4, nodeType = Addon.NODE.NORMAL },
-    FuMo = Category:NewNode { text = "附魔材料", val = 5, nodeType = Addon.NODE.NORMAL },
-    GongCheng = Category:NewNode { text = "工程半成品", val = 6, nodeType = Addon.NODE.NORMAL },
-    MingWen = Category:NewNode { text = "铭文半成品", val = 7, nodeType = Addon.NODE.NORMAL },
-    YuanSu = Category:NewNode { text = "元素", val = 8, nodeType = Addon.NODE.NORMAL },
-    Yao = Category:NewNode { text = "药剂/药水", val = 9, nodeType = Addon.NODE.NORMAL },
+    BanBenTeShu = Category:NewNode { text = "版本特殊物品", val = 0, nodeType = Addon.NODE.ACTIVE },
+    JinShu = Category:NewNode { text = "矿/金属", val = 1, nodeType = Addon.NODE.ACTIVE },
+    Cao = Category:NewNode { text = "草药", val = 2, nodeType = Addon.NODE.ACTIVE },
+    Pi = Category:NewNode { text = "皮", val = 3, nodeType = Addon.NODE.ACTIVE },
+    Bu = Category:NewNode { text = "布", val = 4, nodeType = Addon.NODE.ACTIVE },
+    FuMo = Category:NewNode { text = "附魔材料", val = 5, nodeType = Addon.NODE.ACTIVE },
+    GongCheng = Category:NewNode { text = "工程半成品", val = 6, nodeType = Addon.NODE.ACTIVE },
+    MingWen = Category:NewNode { text = "铭文半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
+    YuanSu = Category:NewNode { text = "元素", val = 8, nodeType = Addon.NODE.ACTIVE },
+    Yao = Category:NewNode { text = "药剂/药水", val = 9, nodeType = Addon.NODE.ACTIVE },
 }
 
 local ExpansionClass = (function()
     local t = {}
     for i = 0, CURRENT_EXP do
-        t[i] = Category:NewNode { text = Category:GetExpansionName(i), val = i, nodeType = Addon.NODE.ACTIVE }
+        t[i] = Category:NewNode { text = Category:GetExpansionName(i), val = i, nodeType = Addon.NODE.NORMAL }
     end
     return t
 end)()
@@ -120,10 +120,10 @@ local LeafClass = {
 }
 
 local ClassLevel = {
-    TopClass, MaterialClass, ExpansionClass, LeafClass
+    TopClass, ExpansionClass, MaterialClass --, LeafClass
 }
 
-function Category:BuildNodeTree(tree, level)
+function Category:BuildNodeTree(tree, level, expandNodeVal)
     tree = tree or Category:NewNode { text = "物品", val = 0, expanded = true, nodeType = Addon.NODE.ROOT }
     level = level or 1
     if ClassLevel[level] == nil then
@@ -143,6 +143,11 @@ function Category:BuildNodeTree(tree, level)
                     false,
                     Addon.NODE.ITEM
                 )
+                child.Expanded = child.Expanded or child.Val == expandNodeVal
+                child.SelfDelete = function()
+                    WBB_Config[tree.Val][itemID] = nil
+                    return tree.Val
+                end
                 table.insert(tree.Children, child)
             end
         end
@@ -157,8 +162,9 @@ function Category:BuildNodeTree(tree, level)
                 tree.Val,
                 false,
                 nodePrototype.NodeType)
+            child.Expanded = child.Expanded or child.Val == expandNodeVal
             table.insert(tree.Children, child)
-            self:BuildNodeTree(child, level + 1)
+            self:BuildNodeTree(child, level + 1, expandNodeVal)
         end
     end
     table.sort(tree.Children, function(a, b) return a.Val < b.Val end)
