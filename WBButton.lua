@@ -42,6 +42,7 @@ function Addon.Frame:PLAYER_LOGIN()
         WBB_Characters = WBB_Characters or {}
         WBB_Config = WBB_Config or {}
         Addon:RegisterCurrentCharacter()
+        Addon:TreeDataInit()
 
         Addon.Frame:CreateToolbar()
         Addon.Frame:CreateProgressBar()

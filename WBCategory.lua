@@ -64,6 +64,12 @@ Addon.NODE = {
     ACTIVE = 5, --真正可以设置的分类节点
 }
 
+Addon.SAVE2 = {
+    NONE = 1, --不存入
+    ALL = 2,  --全部存入
+    ONE = 3,  --集中角色
+}
+
 function Category:NewNode(text, val, icon, parent, expanded, nodeType)
     -- 如果第一个参数是 table → 命名参数
     if type(text) == "table" then
@@ -94,16 +100,18 @@ local TopClass = {
 }
 
 local MaterialClass = {
-    BanBenTeShu = Category:NewNode { text = "版本特殊物品", val = 0, nodeType = Addon.NODE.ACTIVE },
-    JinShu = Category:NewNode { text = "矿/金属", val = 1, nodeType = Addon.NODE.ACTIVE },
-    Cao = Category:NewNode { text = "草药", val = 2, nodeType = Addon.NODE.ACTIVE },
-    Pi = Category:NewNode { text = "皮", val = 3, nodeType = Addon.NODE.ACTIVE },
-    Bu = Category:NewNode { text = "布", val = 4, nodeType = Addon.NODE.ACTIVE },
-    FuMo = Category:NewNode { text = "附魔材料", val = 5, nodeType = Addon.NODE.ACTIVE },
-    GongCheng = Category:NewNode { text = "工程半成品", val = 6, nodeType = Addon.NODE.ACTIVE },
-    MingWen = Category:NewNode { text = "铭文半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
-    YuanSu = Category:NewNode { text = "元素", val = 8, nodeType = Addon.NODE.ACTIVE },
-    Yao = Category:NewNode { text = "药剂/药水", val = 9, nodeType = Addon.NODE.ACTIVE },
+    BanBenTeShu = Category:NewNode { text = "版本特殊物品", val = 1, nodeType = Addon.NODE.ACTIVE },
+    JinShu = Category:NewNode { text = "矿/金属", val = 2, nodeType = Addon.NODE.ACTIVE },
+    Cao = Category:NewNode { text = "草药", val = 3, nodeType = Addon.NODE.ACTIVE },
+    Pi = Category:NewNode { text = "皮", val = 4, nodeType = Addon.NODE.ACTIVE },
+    Bu = Category:NewNode { text = "布", val = 5, nodeType = Addon.NODE.ACTIVE },
+    FuMo = Category:NewNode { text = "附魔材料", val = 6, nodeType = Addon.NODE.ACTIVE },
+    GongCheng = Category:NewNode { text = "工程半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
+    MingWen = Category:NewNode { text = "铭文半成品", val = 8, nodeType = Addon.NODE.ACTIVE },
+    YuanSu = Category:NewNode { text = "元素", val = 9, nodeType = Addon.NODE.ACTIVE },
+    Yao = Category:NewNode { text = "药剂/药水", val = 10, nodeType = Addon.NODE.ACTIVE },
+    Cai = Category:NewNode { text = "食材", val = 11, nodeType = Addon.NODE.ACTIVE },
+    Yu = Category:NewNode { text = "鱼", val = 12, nodeType = Addon.NODE.ACTIVE },
 }
 
 local ExpansionClass = (function()
@@ -122,6 +130,17 @@ local LeafClass = {
 local ClassLevel = {
     TopClass, ExpansionClass, MaterialClass --, LeafClass
 }
+
+function Addon:TreeDataInit()
+    Addon.TreeData = Addon.TreeData or { Addon.Category:BuildNodeTree() }
+    if (Addon.TreeData and #Addon.TreeData > 0) then
+        Addon.TreeData.High = Category:GetTreeVal(Addon.TreeData[1], { TopClass.TopPriority }).Val
+        Addon.TreeData.Low = Category:GetTreeVal(Addon.TreeData[1], { TopClass.BottomPriority }).Val
+    else
+        Addon.TreeData.High = 0
+        Addon.TreeData.Low = 0
+    end
+end
 
 function Category:BuildNodeTree(tree, level, expandNodeVal)
     tree = tree or Category:NewNode { text = "物品", val = 0, expanded = true, nodeType = Addon.NODE.ROOT }
@@ -171,86 +190,156 @@ function Category:BuildNodeTree(tree, level, expandNodeVal)
     return tree
 end
 
-function Category:MatchRules(itemID)
-    local info = Addon:GetItemInfo(itemID)
-
-    if info.bindType ~= 0 then
-        return false
+function Category:GetTreeVal(tree, path, prevVal)
+    if path == nil or #path == 0 then
+        return { Val = 0 }
     end
 
-    if (info.classID == 0) then
+    prevVal = prevVal or 0
+
+    local currVal = path[1].Val + prevVal * 100
+    local sub_path = { unpack(path, 2) }
+    if tree.Val ~= 0 and tree.Val ~= currVal then
+        return { Val = 0 }
+    elseif tree.Val == 0 then
+        -- 根目录，则忽略这一层
+        currVal = prevVal
+        sub_path = path
+    end
+
+    if #sub_path == 0 then
+        return tree
+    end
+
+    for _, child in ipairs(tree.Children) do
+        local c = self:GetTreeVal(child, sub_path, currVal)
+        if c.Val ~= 0 then
+            return c
+        end
+    end
+    return { Val = 0 }
+end
+
+function Category:GetItemVal(itemInfo, nodesVal, vals)
+    for i, nodeVal in ipairs(nodesVal) do
+        local nodeList = WBB_Config[nodeVal] or {}
+        if nodeList[itemInfo.itemID] then
+            return (nodeList[itemInfo.itemID] + vals[i] * 100)
+        end
+    end
+    return 0
+end
+
+function Category:GetMaterialClass(itemInfo)
+    local materialClass = nil
+
+    if (itemInfo.classID == 0) then
         -- 药水/合剂
-        if info.subClassID == 1 or info.subClassID == 2 then
-            if info.expansionID == 9 then
-                return true
-            end
+        if itemInfo.subClassID == 1 or itemInfo.subClassID == 2 then
+            materialClass = MaterialClass.Yao
         end
-    end
-    if (info.classID == 7) then
+    elseif (itemInfo.classID == 7) then
         -- 皮/矿/食材/草药/元素
-        if info.subClassID == 6 or info.subClassID == 7 or info.subClassID == 8 or info.subClassID == 9 or info.subClassID == 10 then
-            if info.expansionID == 7 or info.expansionID == 8 or info.expansionID == 9 or info.expansionID == 10 then
-                return true
-            end
-            -- if info.subClassID == 6 or info.subClassID == 7 or info.subClassID == 9 then
-            --     if info.expansionID == 11 then
-            --         return true
-            --     end
-            -- end
+        if itemInfo.subClassID == 6 then
+            materialClass = MaterialClass.Pi
+        elseif itemInfo.subClassID == 7 then
+            materialClass = MaterialClass.JinShu
+        elseif itemInfo.subClassID == 8 then
+            materialClass = MaterialClass.Cai
+        elseif itemInfo.subClassID == 9 then
+            materialClass = MaterialClass.Cao
+        elseif itemInfo.subClassID == 10 then
+            materialClass = MaterialClass.YuanSu
         end
-    elseif info.classID == 19 then
+    elseif itemInfo.classID == 19 then
         -- 专业材料
-        if info.expansionID == 9 or info.expansionID == 10 then
-            return true
+        if itemInfo.expansionID == 9 then
+            materialClass = MaterialClass.GongCheng
+        elseif itemInfo.expansionID == 10 then
+            materialClass = MaterialClass.MingWen
         end
     end
 
-    return false
+    local expClass = ExpansionClass[itemInfo.expansionID]
+
+    return { materialClass = materialClass, expClass = expClass }
 end
 
-function Category:MaxCategory()
-    return 30 * 10000
-end
-
-function Category:CategoryIndex(info)
-    local idx = info.classID * 10000 + info.subClassID * 100 + info.expansionID
-    if info.expansionID == 11 then
-        idx = idx + self:MaxCategory()
-    end
-    return idx
-end
-
-function Category:GetCategory(itemID)
-    local info = Addon:GetItemInfo(itemID)
-
-    if info.bindType ~= 0 then
+function Category:GetActiveVal(itemInfo, tree)
+    local cls = self:GetMaterialClass(itemInfo)
+    if cls.materialClass == nil or cls.expClass == nil then
         return 0
     end
+    return self:GetTreeVal(tree, { TopClass.Material, cls.expClass, cls.materialClass }).Val or 0
+end
 
-    if (info.classID == 0) then
-        -- 药水/合剂
-        if info.subClassID == 1 or info.subClassID == 2 then
-            return self:CategoryIndex(info)
-        end
-    end
-    if (info.classID == 7) then
-        -- 皮/矿/食材/草药/元素
-        if info.subClassID == 6 or info.subClassID == 7 or info.subClassID == 8 or info.subClassID == 9 or info.subClassID == 10 then
-            return self:CategoryIndex(info)
-        end
-    elseif info.classID == 19 then
-        -- 专业材料
-        return self:CategoryIndex(info)
+function Category:ReadConfig(itemID)
+    local tree = Addon.TreeData[1]
+    local high = Addon.TreeData.High
+    local low = Addon.TreeData.Low
+    local info = Addon:GetItemInfo(itemID)
+
+    if info.bindType ~= 0 then
+        return { val = Addon.SAVE2.NONE }
     end
 
-    return self:MaxCategory()
+    local itemVal = self:GetItemVal(info, { high, low }, { TopClass.TopPriority.Val, TopClass.BottomPriority.Val })
+    if itemVal > 0 then
+        return WBB_Config[itemVal]
+    end
+
+    itemVal = self:GetActiveVal(info, tree)
+    if itemVal > 0 then
+        return WBB_Config[itemVal]
+    end
+
+    return { val = Addon.SAVE2.NONE }
+end
+
+function Category:MaxVal()
+    return 100000000
+end
+
+function Category:GetOrderVal(itemID)
+    local tree = Addon.TreeData[1]
+    local high = Addon.TreeData.High
+    local low = Addon.TreeData.Low
+    local info = Addon:GetItemInfo(itemID)
+
+    -- if info.bindType ~= 0 then
+    --     return self:MaxVal() * 2
+    -- end
+
+    local itemVal = self:GetItemVal(info, { high }, { TopClass.TopPriority.Val })
+    if itemVal > 0 then
+        return itemVal
+    end
+
+    local cls = self:GetMaterialClass(info)
+    if cls.expClass ~= nil and cls.materialClass ~= nil then
+        itemVal = TopClass.Material.Val
+        itemVal = itemVal * 100 + cls.materialClass.Val
+        itemVal = itemVal * 100 + cls.expClass.Val
+        if info.expansionID == CURRENT_EXP then
+            return itemVal + self:MaxVal()
+        end
+        return itemVal
+    end
+
+    itemVal = self:GetItemVal(info, { low }, { TopClass.BottomPriority.Val })
+    if itemVal > 0 then
+        return itemVal + self:MaxVal()
+    end
+
+    return self:MaxVal() * 2 + 1
 end
 
 function Category:GetOrderIndex(itemID)
-    local category = self:GetCategory(itemID)
-    return category * 1000000 + itemID
+    local category = self:GetOrderVal(itemID)
+    -- return category * 1000000 + itemID
+    return category
 end
 
 function Category:IsOverOrder(itemID)
-    return self:GetCategory(itemID) > self:MaxCategory()
+    return self:GetOrderVal(itemID) > self:MaxVal() * 2
 end

@@ -68,19 +68,13 @@ function Settings:CreateConfigUI()
     configFrame.nodes = {}
 
     Settings.ConfigDialog = configFrame
-    Settings.TreeData = { Addon.Category:BuildNodeTree() }
+    Addon:TreeDataInit()
 end
 
 function Settings:Execute()
     Settings:RefreshTree()
     Settings.ConfigDialog:Show()
 end
-
-Settings.SAVE2 = {
-    NONE = 1, --不存入
-    ALL = 2,  --全部存入
-    ONE = 3,  --集中角色
-}
 
 -- ======================
 -- 创建节点
@@ -171,7 +165,7 @@ function Settings:CreateNode(parent, node, level, y)
             WBB_Config[node.Val].curr = WBB_Config[node.Val].curr or 0
             WBB_Config[node.Val][itemID] = WBB_Config[node.Val].curr
             WBB_Config[node.Val].curr = WBB_Config[node.Val].curr + 1
-            Settings.TreeData = { Addon.Category:BuildNodeTree(nil, nil, node.Val) }
+            Addon.TreeData = { Addon.Category:BuildNodeTree(nil, nil, node.Val) }
             Settings:RefreshTree()
         end
 
@@ -239,11 +233,11 @@ function Settings:CreateNode(parent, node, level, y)
         end
 
         local function OnSelectedChanged(val)
-            if (val == self.SAVE2.ONE) then
+            if (val == Addon.SAVE2.ONE) then
                 row.dropdown:Show()
                 local to = row.dropdown.selected
                 WBB_Config[node.Val] = { val = val, to = to }
-            elseif (val == self.SAVE2.ALL) then
+            elseif (val == Addon.SAVE2.ALL) then
                 row.dropdown:Hide()
                 WBB_Config[node.Val] = { val = val }
             else
@@ -261,25 +255,25 @@ function Settings:CreateNode(parent, node, level, y)
 
             btnDel:SetScript("OnClick", function()
                 local pNodeVal = node:SelfDelete()
-                Settings.TreeData = { Addon.Category:BuildNodeTree(nil, nil, pNodeVal) }
+                Addon.TreeData = { Addon.Category:BuildNodeTree(nil, nil, pNodeVal) }
                 Settings:RefreshTree()
             end)
 
             radios = CreateRadios(row,
-                { { "全存入", self.SAVE2.ALL }, { "集中到", self.SAVE2.ONE } },
+                { { "全存入", Addon.SAVE2.ALL }, { "集中到", Addon.SAVE2.ONE } },
                 btnDel,
                 OnSelectedChanged
             )
         elseif node.NodeType == Addon.NODE.ACTIVE then
             radios = CreateRadios(row,
-                { { "不存入", self.SAVE2.NONE }, { "全存入", self.SAVE2.ALL }, { "集中到", self.SAVE2.ONE } },
+                { { "不存入", Addon.SAVE2.NONE }, { "全存入", Addon.SAVE2.ALL }, { "集中到", Addon.SAVE2.ONE } },
                 nil,
                 OnSelectedChanged
             )
         end
 
         row.dropdown = CreateFrame("Frame", nil, row, "UIDropDownMenuTemplate")
-        row.dropdown:SetPoint("RIGHT", radios[self.SAVE2.ONE], "LEFT", -2, 0)
+        row.dropdown:SetPoint("RIGHT", radios[Addon.SAVE2.ONE], "LEFT", -2, 0)
 
         local function dropboxSelectItem(name)
             UIDropDownMenu_SetSelectedName(row.dropdown, name)
@@ -305,8 +299,8 @@ function Settings:CreateNode(parent, node, level, y)
         end)
 
         local function onDropdownSelectedChanged(self_, name)
-            if radios[self.SAVE2.ONE]:GetChecked() then
-                WBB_Config[node.Val] = { val = self.SAVE2.ONE, to = name }
+            if radios[Addon.SAVE2.ONE]:GetChecked() then
+                WBB_Config[node.Val] = { val = Addon.SAVE2.ONE, to = name }
             end
         end
 
@@ -314,9 +308,9 @@ function Settings:CreateNode(parent, node, level, y)
 
         local defVal = {}
         if node.NodeType == Addon.NODE.ACTIVE then
-            defVal = { val = self.SAVE2.NONE }
+            defVal = { val = Addon.SAVE2.NONE }
         elseif node.NodeType == Addon.NODE.ITEM then
-            defVal = { val = self.SAVE2.ALL }
+            defVal = { val = Addon.SAVE2.ALL }
         end
         local curr = WBB_Config[node.Val] and WBB_Config[node.Val] or defVal
         local to = curr.to or Addon:GetCurrentCharacter()
@@ -358,7 +352,7 @@ function Settings:RefreshTree()
     end
     frame.nodes = {}
 
-    local finalY = self:RenderTree(content, self.TreeData, 0, -10)
+    local finalY = self:RenderTree(content, Addon.TreeData, 0, -10)
     content:SetHeight(-finalY + 10)
 end
 

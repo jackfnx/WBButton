@@ -6,11 +6,17 @@ local Category = Addon.Category
 function Deposit:Execute()
     local inventories, accounts = Addon:GetItems(true, "inventory", "account")
     local accountsN = Addon:GetItems(false, "account")
+    local me = Addon:GetCurrentCharacter()
 
     local queue1 = {}
     for _, item in ipairs(inventories) do
-        if Category:MatchRules(item.itemID) then
-            table.insert(queue1, item)
+        local cfg = Category:ReadConfig(item.itemID)
+        if cfg and cfg.val ~= Addon.SAVE2.NONE then
+            if cfg.val == Addon.SAVE2.ONE and cfg.to == me then
+                -- pass
+            else
+                table.insert(queue1, item)
+            end
         end
     end
 
