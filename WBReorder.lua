@@ -13,29 +13,29 @@ function Reorder:Execute()
     local accounts = Addon:GetItems(true, "account")
     local spaces = Addon:GetItems(false, "account")
 
-    -- local grouped = {}
-    -- for _, item in ipairs(accounts) do
-    --     if grouped[item.itemID] == nil then
-    --         grouped[item.itemID] = {}
-    --     end
-    --     table.insert(grouped, item)
-    -- end
+    local grouped = {}
+    for _, item in ipairs(accounts) do
+        if grouped[item.itemID] == nil then
+            grouped[item.itemID] = {}
+        end
+        table.insert(grouped, item)
+    end
 
-    -- local queue1 = {}
-    -- for _, items in pairs(grouped) do
-    --     if #items > 1 then
-    --         Reorder:BuildMergePlan(items, queue1)
-    --     end
-    -- end
+    local queue1 = {}
+    for _, items in pairs(grouped) do
+        if #items > 1 then
+            Reorder:BuildMergePlan(items, queue1)
+        end
+    end
 
-    -- if #queue1 > 0 then
-    --     print("|cff00ff00[WBB]|r 需要合并，等合并完再点一次")
-    --     Addon:StartQueue(queue1)
-    --     return
-    -- end
+    if #queue1 > 0 then
+        print("|cff00ff00[WBB]|r 需要合并，等合并完再点一次")
+        Addon:StartQueue(queue1)
+        return
+    end
 
-    -- accounts = Addon:GetItems(true, "account")
-    -- spaces = Addon:GetItems(false, "account")
+    accounts = Addon:GetItems(true, "account")
+    spaces = Addon:GetItems(false, "account")
 
     table.sort(accounts, function(a, b)
         if a.itemID == b.itemID then
@@ -55,15 +55,6 @@ function Reorder:Execute()
 
         return a.itemID < b.itemID
     end)
-
-    -- for i, v in ipairs(accounts) do
-    --     local info = Addon:GetItemInfo(v.itemID)
-    --     local idx = Category:GetOrderIndex(v.itemID)
-    --     print(i, info.itemName, idx)
-    --     if (i > 40) then
-    --         return
-    --     end
-    -- end
 
     local slotsNum = Addon:GetSlotsNum("account")
 
@@ -86,7 +77,7 @@ function Reorder:Execute()
                 slot = item.slot
             })
         else
-            -- 如果目标位置有东西，就把那个东西挪到下一个空格子里
+            -- 如果目标位置有东西，就先把那个东西挪到下一个空格子里，再挪当前东西
             if #spaces == 0 then
                 print("|cff00ff00[WBB]|r 没有足够的空格，无法完成排序")
                 return

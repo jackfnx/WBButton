@@ -230,10 +230,18 @@ function Category:GetItemVal(itemInfo, nodesVal, vals)
     return 0
 end
 
+local NPC_SELLS = {
+    [242646] = true, -- 香料包，12.0，烹饪
+    [242643] = true, -- 大块黄油，12.0，烹饪
+    [242642] = true, -- 萨拉斯草药，12.0，烹饪
+}
+
 function Category:GetMaterialClass(itemInfo)
     local materialClass = nil
 
-    if (itemInfo.classID == 0) then
+    if NPC_SELLS[itemInfo.itemID] then
+        -- do nothing
+    elseif (itemInfo.classID == 0) then
         -- 药水/合剂
         if itemInfo.subClassID == 1 or itemInfo.subClassID == 2 then
             materialClass = MaterialClass.Yao
@@ -310,6 +318,10 @@ function Category:GetOrderVal(itemID)
     --     return self:MaxVal() * 2
     -- end
 
+    if info.classID == 2 or info.classID == 4 then
+        return self:MaxVal() * 4 -- 装备放在最后面
+    end
+
     local itemVal = self:GetItemVal(info, { high }, { TopClass.TopPriority.Val })
     if itemVal > 0 then
         return itemVal
@@ -321,7 +333,7 @@ function Category:GetOrderVal(itemID)
         itemVal = itemVal * 100 + cls.materialClass.Val
         itemVal = itemVal * 100 + cls.expClass.Val
         if info.expansionID == CURRENT_EXP then
-            return itemVal + self:MaxVal()
+            return itemVal + self:MaxVal() * 3
         end
         return itemVal
     end
@@ -341,5 +353,5 @@ function Category:GetOrderIndex(itemID)
 end
 
 function Category:IsOverOrder(itemID)
-    return self:GetOrderVal(itemID) > self:MaxVal() * 2
+    return self:GetOrderVal(itemID) > self:MaxVal() * 5
 end
