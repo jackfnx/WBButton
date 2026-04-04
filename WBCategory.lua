@@ -287,7 +287,7 @@ function Category:ReadConfig(itemID)
     local low = Addon.TreeData.Low
     local info = Addon:GetItemInfo(itemID)
 
-    if info.bindType ~= 0 then
+    if info.bindType > 2 then
         return { val = Addon.SAVE2.NONE }
     end
 
