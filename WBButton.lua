@@ -2,7 +2,7 @@
 
 local _, Addon = ...
 Addon.Frame = CreateFrame("Frame") -- 用于注册事件
-Addon.Deposit = {}
+Addon.Sync = {}
 Addon.Category = {}
 Addon.Reorder = {}
 Addon.Settings = {}
@@ -110,7 +110,7 @@ function Addon.Frame:CreateToolbar()
     toolbar:Hide()
 
     local buttons = {}
-    local buttonNames = { "整理", "存入", "小工具", "设置" }
+    local buttonNames = { "整理", "存/取", "小工具", "设置" }
 
     for i, name in ipairs(buttonNames) do
         local btn = CreateFrame("Button", "WB_Toolbar_Button" .. i, toolbar, "UIPanelButtonTemplate")
@@ -125,9 +125,9 @@ function Addon.Frame:CreateToolbar()
         Addon:OnReorderClick()
     end)
 
-    -- 存入
-    buttons["存入"]:SetScript("OnClick", function()
-        Addon:OnDepositClick()
+    -- 存取
+    buttons["存/取"]:SetScript("OnClick", function()
+        Addon:OnSyncClick()
     end)
 
     -- 小工具
@@ -156,13 +156,13 @@ function Addon:OnReorderClick()
     end
 end
 
-function Addon:OnDepositClick()
-    print("|cff00ff00[WBB]|r 点击存入按钮")
+function Addon:OnSyncClick()
+    print("|cff00ff00[WBB]|r 点击存取按钮")
 
-    if Addon.Deposit.Execute then
-        Addon.Deposit:Execute()
+    if Addon.Sync.Execute then
+        Addon.Sync:Execute()
     else
-        print("|cffffff00[WBB]|r Deposit 未实现")
+        print("|cffffff00[WBB]|r Sync 未实现")
     end
 end
 

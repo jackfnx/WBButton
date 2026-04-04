@@ -1,9 +1,9 @@
 local _, Addon = ...
-local Deposit = Addon.Deposit
+local Sync = Addon.Sync
 local Category = Addon.Category
 
 
-function Deposit:Execute()
+function Sync:Execute()
     local inventories, accounts = Addon:GetItems(true, "inventory", "account")
     local accountsN = Addon:GetItems(false, "account")
     local me = Addon:GetCurrentCharacter()

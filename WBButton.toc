@@ -13,7 +13,7 @@ WBButton.lua
 WBItems.lua
 WBMover.lua
 WBCategory.lua
-WBDeposit.lua
+WBSync.lua
 WBReorder.lua
 WBSettings.lua
 WBWidget.lua
