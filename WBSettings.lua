@@ -19,7 +19,7 @@ function Settings:CreateConfigUI()
         tile     = true,
         tileSize = 32,
         edgeSize = 32,
-        insets   = { left = 8, right = 8, top = 8, bottom = 8 }
+        insets   = { left = 2, right = 2, top = 2, bottom = 2 }
     }
     configFrame:ApplyBackdrop()
     configFrame:SetMovable(true)
@@ -30,7 +30,7 @@ function Settings:CreateConfigUI()
 
     local bg = configFrame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(true)
-    -- bg:SetColorTexture(0, 0, 0, 0.75) -- 半透明黑
+    bg:SetColorTexture(0, 0, 0, 0.8) -- 半透明黑
 
     local titleBg = configFrame:CreateTexture(nil, "BACKGROUND")
     titleBg:SetPoint("TOPLEFT", 8, -8)

@@ -144,5 +144,5 @@ function Addon:ItemStr(itemID, itemInfo)
         itemInfo = self:GetItemInfo(itemID)
     end
     return string.format("%s[%d], %s, %s", itemInfo.itemName, itemID, itemInfo.itemSubType,
-        Addon.Core:GetExpansionName(itemInfo.expansionID))
+        Addon:GetExpansionName(itemInfo.expansionID))
 end

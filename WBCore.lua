@@ -3,6 +3,20 @@ local Core = Addon.Core
 
 local CURRENT_EXP = 11
 
+Addon.NODE = {
+    ROOT = 1,   --根节点
+    ANCHOR = 2, --手工锚节点
+    ITEM = 3,   --手工物品节点
+    NORMAL = 4, --普通过路节点
+    ACTIVE = 5, --真正可以设置的分类节点
+}
+
+Addon.SAVE2 = {
+    NONE = 1, --不存入
+    ALL = 2,  --全部存入
+    ONE = 3,  --集中角色
+}
+
 local ExpansionNames = {
     [0] = "1.x 经典旧世",
     [1] = "2.x 燃烧的远征",
@@ -35,7 +49,7 @@ local ExpansionIcons = {
 }
 
 -- 使用函数封装
-function Core:GetExpansionName(id)
+function Addon:GetExpansionName(id)
     local expName = ExpansionNames[id] or "未知资料片"
     return expName
 
@@ -55,20 +69,6 @@ function Core:GetExpansionName(id)
 
     -- return string.rep(" ", spaceBefore) .. iconString .. expName
 end
-
-Addon.NODE = {
-    ROOT = 1,   --根节点
-    ANCHOR = 2, --手工锚节点
-    ITEM = 3,   --手工物品节点
-    NORMAL = 4, --普通过路节点
-    ACTIVE = 5, --真正可以设置的分类节点
-}
-
-Addon.SAVE2 = {
-    NONE = 1, --不存入
-    ALL = 2,  --全部存入
-    ONE = 3,  --集中角色
-}
 
 function Core:NewNode(text, val, icon, parent, expanded, nodeType)
     -- 如果第一个参数是 table → 命名参数
@@ -117,7 +117,7 @@ local MaterialClass = {
 local ExpansionClass = (function()
     local t = {}
     for i = 0, CURRENT_EXP do
-        t[i] = Core:NewNode { text = Core:GetExpansionName(i), val = i, nodeType = Addon.NODE.NORMAL }
+        t[i] = Core:NewNode { text = Addon:GetExpansionName(i), val = i, nodeType = Addon.NODE.NORMAL }
     end
     return t
 end)()
