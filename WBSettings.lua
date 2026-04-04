@@ -165,7 +165,7 @@ function Settings:CreateNode(parent, node, level, y)
             WBB_Config[node.Val].curr = WBB_Config[node.Val].curr or 0
             WBB_Config[node.Val][itemID] = WBB_Config[node.Val].curr
             WBB_Config[node.Val].curr = WBB_Config[node.Val].curr + 1
-            Addon.TreeData = { Addon.Category:BuildNodeTree(nil, nil, node.Val) }
+            Addon.TreeData = { Addon.Core:BuildNodeTree(nil, nil, node.Val) }
             Settings:RefreshTree()
         end
 
@@ -255,7 +255,7 @@ function Settings:CreateNode(parent, node, level, y)
 
             btnDel:SetScript("OnClick", function()
                 local pNodeVal = node:SelfDelete()
-                Addon.TreeData = { Addon.Category:BuildNodeTree(nil, nil, pNodeVal) }
+                Addon.TreeData = { Addon.Core:BuildNodeTree(nil, nil, pNodeVal) }
                 Settings:RefreshTree()
             end)
 

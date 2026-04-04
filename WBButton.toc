@@ -5,14 +5,14 @@
 ## Version: 0.0.1
 ## Notes: Warband Bank Button
 ## Notes-zhCN: 战团银行按钮
-## Category: Bags
+## Core: Bags
 ## IconTexture: 133233
 ## SavedVariables: WBB_Characters, WBB_Config
 
 WBButton.lua
-WBItems.lua
+WBCore.lua
+WBUtils.lua
 WBMover.lua
-WBCategory.lua
 WBSync.lua
 WBReorder.lua
 WBSettings.lua

@@ -1,5 +1,5 @@
 local _, Addon = ...
-local Category = Addon.Category
+local Core = Addon.Core
 
 local CURRENT_EXP = 11
 
@@ -35,7 +35,7 @@ local ExpansionIcons = {
 }
 
 -- 使用函数封装
-function Category:GetExpansionName(id)
+function Core:GetExpansionName(id)
     local expName = ExpansionNames[id] or "未知资料片"
     return expName
 
@@ -70,7 +70,7 @@ Addon.SAVE2 = {
     ONE = 3,  --集中角色
 }
 
-function Category:NewNode(text, val, icon, parent, expanded, nodeType)
+function Core:NewNode(text, val, icon, parent, expanded, nodeType)
     -- 如果第一个参数是 table → 命名参数
     if type(text) == "table" then
         local args = text
@@ -94,37 +94,37 @@ function Category:NewNode(text, val, icon, parent, expanded, nodeType)
 end
 
 local TopClass = {
-    TopPriority = Category:NewNode { text = "优先特殊物品", val = 2, nodeType = Addon.NODE.ANCHOR },
-    Material = Category:NewNode { text = "材料", val = 3, nodeType = Addon.NODE.NORMAL },
-    BottomPriority = Category:NewNode { text = "低优先级杂物", val = 5, nodeType = Addon.NODE.ANCHOR },
+    TopPriority = Core:NewNode { text = "优先特殊物品", val = 2, nodeType = Addon.NODE.ANCHOR },
+    Material = Core:NewNode { text = "材料", val = 3, nodeType = Addon.NODE.NORMAL },
+    BottomPriority = Core:NewNode { text = "低优先级杂物", val = 5, nodeType = Addon.NODE.ANCHOR },
 }
 
 local MaterialClass = {
-    BanBenTeShu = Category:NewNode { text = "版本特殊物品", val = 1, nodeType = Addon.NODE.ACTIVE },
-    JinShu = Category:NewNode { text = "矿/金属", val = 2, nodeType = Addon.NODE.ACTIVE },
-    Cao = Category:NewNode { text = "草药", val = 3, nodeType = Addon.NODE.ACTIVE },
-    Pi = Category:NewNode { text = "皮", val = 4, nodeType = Addon.NODE.ACTIVE },
-    Bu = Category:NewNode { text = "布", val = 5, nodeType = Addon.NODE.ACTIVE },
-    FuMo = Category:NewNode { text = "附魔材料", val = 6, nodeType = Addon.NODE.ACTIVE },
-    GongCheng = Category:NewNode { text = "工程半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
-    MingWen = Category:NewNode { text = "铭文半成品", val = 8, nodeType = Addon.NODE.ACTIVE },
-    YuanSu = Category:NewNode { text = "元素", val = 9, nodeType = Addon.NODE.ACTIVE },
-    Yao = Category:NewNode { text = "药剂/药水", val = 10, nodeType = Addon.NODE.ACTIVE },
-    Cai = Category:NewNode { text = "食材", val = 11, nodeType = Addon.NODE.ACTIVE },
-    Yu = Category:NewNode { text = "鱼", val = 12, nodeType = Addon.NODE.ACTIVE },
+    BanBenTeShu = Core:NewNode { text = "版本特殊物品", val = 1, nodeType = Addon.NODE.ACTIVE },
+    JinShu = Core:NewNode { text = "矿/金属", val = 2, nodeType = Addon.NODE.ACTIVE },
+    Cao = Core:NewNode { text = "草药", val = 3, nodeType = Addon.NODE.ACTIVE },
+    Pi = Core:NewNode { text = "皮", val = 4, nodeType = Addon.NODE.ACTIVE },
+    Bu = Core:NewNode { text = "布", val = 5, nodeType = Addon.NODE.ACTIVE },
+    FuMo = Core:NewNode { text = "附魔材料", val = 6, nodeType = Addon.NODE.ACTIVE },
+    GongCheng = Core:NewNode { text = "工程半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
+    MingWen = Core:NewNode { text = "铭文半成品", val = 8, nodeType = Addon.NODE.ACTIVE },
+    YuanSu = Core:NewNode { text = "元素", val = 9, nodeType = Addon.NODE.ACTIVE },
+    Yao = Core:NewNode { text = "药剂/药水", val = 10, nodeType = Addon.NODE.ACTIVE },
+    Cai = Core:NewNode { text = "食材", val = 11, nodeType = Addon.NODE.ACTIVE },
+    Yu = Core:NewNode { text = "鱼", val = 12, nodeType = Addon.NODE.ACTIVE },
 }
 
 local ExpansionClass = (function()
     local t = {}
     for i = 0, CURRENT_EXP do
-        t[i] = Category:NewNode { text = Category:GetExpansionName(i), val = i, nodeType = Addon.NODE.NORMAL }
+        t[i] = Core:NewNode { text = Core:GetExpansionName(i), val = i, nodeType = Addon.NODE.NORMAL }
     end
     return t
 end)()
 
 local LeafClass = {
-    PuTong = Category:NewNode { text = "普通", val = 0, nodeType = Addon.NODE.ACTIVE },
-    TeShu = Category:NewNode { text = "特殊", val = 1, nodeType = Addon.NODE.ACTIVE },
+    PuTong = Core:NewNode { text = "普通", val = 0, nodeType = Addon.NODE.ACTIVE },
+    TeShu = Core:NewNode { text = "特殊", val = 1, nodeType = Addon.NODE.ACTIVE },
 }
 
 local ClassLevel = {
@@ -132,18 +132,18 @@ local ClassLevel = {
 }
 
 function Addon:TreeDataInit()
-    Addon.TreeData = Addon.TreeData or { Addon.Category:BuildNodeTree() }
+    Addon.TreeData = Addon.TreeData or { Addon.Core:BuildNodeTree() }
     if (Addon.TreeData and #Addon.TreeData > 0) then
-        Addon.TreeData.High = Category:GetTreeVal(Addon.TreeData[1], { TopClass.TopPriority }).Val
-        Addon.TreeData.Low = Category:GetTreeVal(Addon.TreeData[1], { TopClass.BottomPriority }).Val
+        Addon.TreeData.High = Core:GetTreeVal(Addon.TreeData[1], { TopClass.TopPriority }).Val
+        Addon.TreeData.Low = Core:GetTreeVal(Addon.TreeData[1], { TopClass.BottomPriority }).Val
     else
         Addon.TreeData.High = 0
         Addon.TreeData.Low = 0
     end
 end
 
-function Category:BuildNodeTree(tree, level, expandNodeVal)
-    tree = tree or Category:NewNode { text = "物品", val = 0, expanded = true, nodeType = Addon.NODE.ROOT }
+function Core:BuildNodeTree(tree, level, expandNodeVal)
+    tree = tree or Core:NewNode { text = "物品", val = 0, expanded = true, nodeType = Addon.NODE.ROOT }
     level = level or 1
     if ClassLevel[level] == nil then
         return
@@ -154,7 +154,7 @@ function Category:BuildNodeTree(tree, level, expandNodeVal)
             if type(itemID) == "number" then
                 local v = items[itemID]
                 local info = Addon:GetItemInfo(itemID)
-                local child = Category:NewNode(
+                local child = Core:NewNode(
                     info.itemName,
                     v,
                     info.itemTexture,
@@ -174,7 +174,7 @@ function Category:BuildNodeTree(tree, level, expandNodeVal)
         -- no child
     else
         for _, nodePrototype in pairs(ClassLevel[level]) do
-            local child = Category:NewNode(
+            local child = Core:NewNode(
                 nodePrototype.Text,
                 nodePrototype.Val,
                 nil,
@@ -190,7 +190,7 @@ function Category:BuildNodeTree(tree, level, expandNodeVal)
     return tree
 end
 
-function Category:GetTreeVal(tree, path, prevVal)
+function Core:GetTreeVal(tree, path, prevVal)
     if path == nil or #path == 0 then
         return { Val = 0 }
     end
@@ -220,7 +220,7 @@ function Category:GetTreeVal(tree, path, prevVal)
     return { Val = 0 }
 end
 
-function Category:GetItemVal(itemInfo, nodesVal, vals)
+function Core:GetItemVal(itemInfo, nodesVal, vals)
     for i, nodeVal in ipairs(nodesVal) do
         local nodeList = WBB_Config[nodeVal] or {}
         if nodeList[itemInfo.itemID] then
@@ -236,7 +236,7 @@ local NPC_SELLS = {
     [242642] = true, -- 萨拉斯草药，12.0，烹饪
 }
 
-function Category:GetMaterialClass(itemInfo)
+function Core:GetMaterialClass(itemInfo)
     local materialClass = nil
 
     if NPC_SELLS[itemInfo.itemID] then
@@ -273,7 +273,7 @@ function Category:GetMaterialClass(itemInfo)
     return { materialClass = materialClass, expClass = expClass }
 end
 
-function Category:GetActiveVal(itemInfo, tree)
+function Core:GetActiveVal(itemInfo, tree)
     local cls = self:GetMaterialClass(itemInfo)
     if cls.materialClass == nil or cls.expClass == nil then
         return 0
@@ -281,7 +281,7 @@ function Category:GetActiveVal(itemInfo, tree)
     return self:GetTreeVal(tree, { TopClass.Material, cls.expClass, cls.materialClass }).Val or 0
 end
 
-function Category:ReadConfig(itemID)
+function Core:ReadConfig(itemID)
     local tree = Addon.TreeData[1]
     local high = Addon.TreeData.High
     local low = Addon.TreeData.Low
@@ -304,11 +304,11 @@ function Category:ReadConfig(itemID)
     return { val = Addon.SAVE2.NONE }
 end
 
-function Category:MaxVal()
+function Core:MaxVal()
     return 100000000
 end
 
-function Category:GetOrderVal(itemID)
+function Core:GetOrderVal(itemID)
     local tree = Addon.TreeData[1]
     local high = Addon.TreeData.High
     local low = Addon.TreeData.Low
@@ -346,12 +346,12 @@ function Category:GetOrderVal(itemID)
     return self:MaxVal() * 2 + 1
 end
 
-function Category:GetOrderIndex(itemID)
+function Core:GetOrderIndex(itemID)
     local category = self:GetOrderVal(itemID)
     -- return category * 1000000 + itemID
     return category
 end
 
-function Category:IsOverOrder(itemID)
+function Core:IsOverOrder(itemID)
     return self:GetOrderVal(itemID) > self:MaxVal() * 5
 end

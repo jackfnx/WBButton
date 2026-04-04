@@ -1,6 +1,6 @@
 local _, Addon = ...
 local Reorder = Addon.Reorder
-local Category = Addon.Category
+local Core = Addon.Core
 
 
 function Reorder:Execute()
@@ -42,14 +42,14 @@ function Reorder:Execute()
             -- 理论上讲，这里不应该出现
             return (a.bag * 100 + a.slot) < (b.bag * 100 + b.slot)
         end
-        local idx1 = Category:GetOrderIndex(a.itemID)
-        local idx2 = Category:GetOrderIndex(b.itemID)
+        local idx1 = Core:GetOrderIndex(a.itemID)
+        local idx2 = Core:GetOrderIndex(b.itemID)
 
         if (idx1 ~= idx2) then
             return idx1 < idx2
         end
 
-        -- if Category:IsOverOrder(a.itemID) then
+        -- if Core:IsOverOrder(a.itemID) then
         --     return (a.bag * 100 + a.slot) < (b.bag * 100 + b.slot)
         -- end
 

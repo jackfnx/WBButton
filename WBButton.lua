@@ -3,7 +3,7 @@
 local _, Addon = ...
 Addon.Frame = CreateFrame("Frame") -- 用于注册事件
 Addon.Sync = {}
-Addon.Category = {}
+Addon.Core = {}
 Addon.Reorder = {}
 Addon.Settings = {}
 Addon.Widget = {}

@@ -1,6 +1,6 @@
 local _, Addon = ...
 local Sync = Addon.Sync
-local Category = Addon.Category
+local Core = Addon.Core
 
 
 function Sync:Execute()
@@ -10,7 +10,7 @@ function Sync:Execute()
 
     local queue1 = {}
     for _, item in ipairs(inventories) do
-        local cfg = Category:ReadConfig(item.itemID)
+        local cfg = Core:ReadConfig(item.itemID)
         if cfg and cfg.val ~= Addon.SAVE2.NONE then
             if cfg.val == Addon.SAVE2.ONE and cfg.to == me then
                 -- pass
