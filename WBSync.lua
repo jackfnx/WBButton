@@ -5,52 +5,57 @@ local Core = Addon.Core
 
 function Sync:Execute()
     local inventories, accounts = Addon:GetItems(true, "inventory", "account")
-    local accountsN = Addon:GetItems(false, "account")
+    local spaceInv, spaceAcc = Addon:GetItems(false, "inventory", "account")
     local me = Addon:GetCurrentCharacter()
 
     local queue1 = {}
-    for _, item in ipairs(inventories) do
-        local cfg = Core:ReadConfig(item.itemID)
+    for _, item1 in ipairs(inventories) do
+        local cfg = Core:ReadConfig(item1.itemID)
         if cfg and cfg.val ~= Addon.SAVE2.NONE then
             if cfg.val == Addon.SAVE2.ONE and cfg.to == me then
                 -- pass
             else
-                table.insert(queue1, item)
+                table.insert(queue1, item1)
             end
         end
     end
 
     local queue2 = {}
-    for _, dest_item in ipairs(accounts) do
-        for i, src_item in ipairs(queue1) do
-            if (dest_item.itemID == src_item.itemID) then
-                src_item.bankTabID = dest_item.bagID
-                src_item.bankSlot = dest_item.slot
+    local queue3 = {}
+    for _, item2 in ipairs(accounts) do
+        for i, item1 in ipairs(queue1) do
+            if (item2.itemID == item1.itemID) then
+                item1.bankTabID = item2.bagID
+                item1.bankSlot = item2.slot
                 table.insert(queue2, {
-                    itemID = src_item.itemID,
-                    srcBag = src_item.bag,
-                    srcSlot = src_item.slot,
-                    destBag = dest_item.bag,
-                    destSlot = dest_item.slot
+                    itemID = item1.itemID,
+                    srcBag = item1.bag,
+                    srcSlot = item1.slot,
+                    destBag = item2.bag,
+                    destSlot = item2.slot
                 })
                 table.remove(queue1, i)
                 break
             end
         end
+        local cfg = Core:ReadConfig(item2.itemID)
+        if cfg and cfg.val == Addon.SAVE2.ONE and cfg.to == me then
+            table.insert(queue3, item2)
+        end
     end
 
-    for _, item in ipairs(queue1) do
-        if #accountsN > 0 then
-            for i, dest_kg in ipairs(accountsN) do
+    for _, item1 in ipairs(queue1) do
+        if #spaceAcc > 0 then
+            for i, dest_kg in ipairs(spaceAcc) do
                 table.insert(queue2, {
-                    itemID = item.itemID,
-                    srcBag = item.bag,
-                    srcSlot = item.slot,
+                    itemID = item1.itemID,
+                    srcBag = item1.bag,
+                    srcSlot = item1.slot,
                     destBag = dest_kg.bag,
                     destSlot = dest_kg.slot
                 })
-                table.remove(accountsN, i)
-                break;
+                table.remove(spaceAcc, i)
+                break
             end
         else
             print("|cff00ff00[WBB]|r 银行满了，有物品没存进去")
@@ -58,5 +63,51 @@ function Sync:Execute()
         end
     end
 
-    Addon:StartQueue(queue2)
+    local queue4 = {}
+    for _, item1 in ipairs(inventories) do
+        for i, item3 in ipairs(queue3) do
+            if (item1.itemID == item3.itemID) then
+                item3.bankTabID = item1.bagID
+                item3.bankSlot = item1.slot
+                table.insert(queue4, {
+                    itemID = item3.itemID,
+                    srcBag = item3.bag,
+                    srcSlot = item3.slot,
+                    destBag = item1.bag,
+                    destSlot = item1.slot
+                })
+                table.remove(queue3, i)
+                break
+            end
+        end
+    end
+
+    for _, item3 in ipairs(queue3) do
+        if #spaceInv > 0 then
+            for i, dest_kg in ipairs(spaceInv) do
+                table.insert(queue4, {
+                    itemID = item3.itemID,
+                    srcBag = item3.bag,
+                    srcSlot = item3.slot,
+                    destBag = dest_kg.bag,
+                    destSlot = dest_kg.slot
+                })
+                table.remove(spaceInv, i)
+                break
+            end
+        else
+            print("|cff00ff00[WBB]|r 背包满了，有物品没取出来")
+            break
+        end
+    end
+
+    local queue1000 = {}
+    for _, v in ipairs(queue2) do
+        table.insert(queue1000, v)
+    end
+    for _, v in ipairs(queue4) do
+        table.insert(queue1000, v)
+    end
+
+    Addon:StartQueue(queue1000)
 end
