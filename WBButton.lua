@@ -151,8 +151,6 @@ function Addon:OnReorderClick()
 
     if Addon.Reorder.Execute then
         Addon.Reorder:Execute()
-    else
-        print("|cffffff00[WBB]|r Reorder 未实现")
     end
 end
 
@@ -161,28 +159,18 @@ function Addon:OnSyncClick()
 
     if Addon.Sync.Execute then
         Addon.Sync:Execute()
-    else
-        print("|cffffff00[WBB]|r Sync 未实现")
     end
 end
 
 function Addon:OnWidgetClick()
-    print("|cff00ff00[WBB]|r 点击小工具按钮")
-
     if Addon.Widget.WidgetDialog then
         Addon.Widget.WidgetDialog:Show()
-    else
-        print("|cffffff00[WBB]|r Widget 未实现")
     end
 end
 
 function Addon:OnSettingClick()
-    print("|cff00ff00[WBB]|r 点击设置按钮")
-
     if self.Settings.Execute then
         self.Settings:Execute()
-    else
-        print("|cffffff00[WBB]|r Setting 未实现")
     end
 end
 

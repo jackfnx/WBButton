@@ -96,8 +96,19 @@ function Addon:GetItems(yn, ...)
     return unpack(items)
 end
 
+function Addon:GetItemIsBindToWarband(itemID)
+    local tooltip = C_TooltipInfo.GetItemByID(itemID)
+    for _, line in ipairs(tooltip.lines) do
+        if line.type == 20 then
+            return line.bonding == 5
+        end
+    end
+    return false
+end
+
 function Addon:GetItemInfo(itemID, ls)
     local values = { C_Item.GetItemInfo(itemID) }
+    local isBindToWarband = self:GetItemIsBindToWarband(itemID)
     local info = {
         itemID = itemID,
         itemName = values[1],
@@ -115,6 +126,7 @@ function Addon:GetItemInfo(itemID, ls)
         subClassID = values[13],
         bindType = values[14],
         expansionID = values[15],
+        moveable = values[14] == 0 or values[14] == 2 or isBindToWarband
     }
     if ls then
         info = {
@@ -134,6 +146,7 @@ function Addon:GetItemInfo(itemID, ls)
             [14] = { 'subClassID', values[13] },
             [15] = { 'bindType', values[14] },
             [16] = { 'expansionID', values[15] },
+            [17] = { 'moveable', values[14] == 0 or values[14] == 2 or isBindToWarband }
         }
     end
     return info
