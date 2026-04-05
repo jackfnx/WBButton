@@ -18,7 +18,7 @@ function Reorder:Execute()
         if grouped[item.itemID] == nil then
             grouped[item.itemID] = {}
         end
-        table.insert(grouped, item)
+        table.insert(grouped[item.itemID], item)
     end
 
     local queue1 = {}
