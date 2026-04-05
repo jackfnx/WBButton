@@ -106,12 +106,14 @@ local MaterialClass = {
     Pi = Core:NewNode { text = "皮", val = 4, nodeType = Addon.NODE.ACTIVE },
     Bu = Core:NewNode { text = "布", val = 5, nodeType = Addon.NODE.ACTIVE },
     FuMo = Core:NewNode { text = "附魔材料", val = 6, nodeType = Addon.NODE.ACTIVE },
-    GongCheng = Core:NewNode { text = "工程半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
-    MingWen = Core:NewNode { text = "铭文半成品", val = 8, nodeType = Addon.NODE.ACTIVE },
+    GongCheng = Core:NewNode { text = "工程零件/半成品", val = 7, nodeType = Addon.NODE.ACTIVE },
+    MingWen = Core:NewNode { text = "铭文材料/半成品", val = 8, nodeType = Addon.NODE.ACTIVE },
     YuanSu = Core:NewNode { text = "元素", val = 9, nodeType = Addon.NODE.ACTIVE },
     Yao = Core:NewNode { text = "药剂/药水", val = 10, nodeType = Addon.NODE.ACTIVE },
     Cai = Core:NewNode { text = "食材", val = 11, nodeType = Addon.NODE.ACTIVE },
     Yu = Core:NewNode { text = "鱼", val = 12, nodeType = Addon.NODE.ACTIVE },
+    ZhuBao = Core:NewNode { text = "珠宝", val = 13, nodeType = Addon.NODE.ACTIVE },
+    ChengPinCaiLiao = Core:NewNode { text = "成品材料", val = 14, nodeType = Addon.NODE.ACTIVE },
 }
 
 local ExpansionClass = (function()
@@ -236,19 +238,43 @@ local NPC_SELLS = {
     [242642] = true, -- 萨拉斯草药，12.0，烹饪
 }
 
+-- 版本特殊材料
+local BAN_BEN_TE_SHU = {
+    [236952] = true, -- 纯净虚空微粒，12.0
+    [236951] = true, -- 狂野魔法微粒，12.0
+    [236950] = true, -- 原始能量微粒，12.0
+    [236949] = true, -- 圣光微粒，12.0
+    [251285] = true, -- 石化之根, 12.0
+    [251283] = true, -- 磨难之钽，12.0
+    [213610] = true, -- 晶脉粉末，11.0
+    [213612] = true, -- 新绿孢子，11.0
+    [213613] = true, -- 魔网残渣，11.0
+    [221756] = true, -- 一瓶卡赫提之油，11.0
+    [221757] = true, -- 幽邃之皮，11.0
+    [80433] = true,  -- 血魂，5.0
+}
+
 function Core:GetMaterialClass(itemInfo)
     local materialClass = nil
 
     if NPC_SELLS[itemInfo.itemID] then
         -- do nothing
+    elseif BAN_BEN_TE_SHU[itemInfo.itemID] then
+        materialClass = MaterialClass.BanBenTeShu
     elseif (itemInfo.classID == 0) then
         -- 药水/合剂
         if itemInfo.subClassID == 1 or itemInfo.subClassID == 2 then
             materialClass = MaterialClass.Yao
         end
     elseif (itemInfo.classID == 7) then
-        -- 皮/矿/食材/草药/元素
-        if itemInfo.subClassID == 6 then
+        -- 工程零件/珠宝/布/皮/矿/食材/草药/元素/铭文/成品材料
+        if itemInfo.subClassID == 1 then
+            materialClass = MaterialClass.GongCheng
+        elseif itemInfo.subClassID == 4 then
+            materialClass = MaterialClass.ZhuBao
+        elseif itemInfo.subClassID == 5 then
+            materialClass = MaterialClass.Bu
+        elseif itemInfo.subClassID == 6 then
             materialClass = MaterialClass.Pi
         elseif itemInfo.subClassID == 7 then
             materialClass = MaterialClass.JinShu
@@ -258,12 +284,16 @@ function Core:GetMaterialClass(itemInfo)
             materialClass = MaterialClass.Cao
         elseif itemInfo.subClassID == 10 then
             materialClass = MaterialClass.YuanSu
+        elseif itemInfo.subClassID == 16 then
+            materialClass = MaterialClass.MingWen
+        elseif itemInfo.subClassID == 19 then
+            materialClass = MaterialClass.ChengPinCaiLiao
         end
     elseif itemInfo.classID == 19 then
-        -- 专业材料
-        if itemInfo.expansionID == 9 then
+        -- 半成品
+        if itemInfo.subClassID == 9 then
             materialClass = MaterialClass.GongCheng
-        elseif itemInfo.expansionID == 10 then
+        elseif itemInfo.subClassID == 10 then
             materialClass = MaterialClass.MingWen
         end
     end
@@ -287,7 +317,7 @@ function Core:ReadConfig(itemID)
     local low = Addon.TreeData.Low
     local info = Addon:GetItemInfo(itemID)
 
-    if info.bindType > 2 then
+    if info.bindType ~= 0 and info.bindType < 7 then
         return { val = Addon.SAVE2.NONE }
     end
 
