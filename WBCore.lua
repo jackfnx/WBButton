@@ -17,6 +17,18 @@ Addon.SAVE2 = {
     ONE = 3,  --集中角色
 }
 
+Addon.Prof = {
+    None = 0,
+    Min = 186,         -- 采矿
+    Herb = 182,        -- 采药
+    Skin = 393,        -- 剥皮
+    Tailor = 197,      -- 裁缝
+    Enchant = 333,     -- 附魔
+    Engineer = 202,    -- 工程
+    Inscription = 773, -- 铭文
+    Jewel = 755,       -- 珠宝
+}
+
 local ExpansionNames = {
     [0] = "1.x 经典旧世",
     [1] = "2.x 燃烧的远征",
@@ -338,6 +350,31 @@ function Core:GetMaterialClass(itemInfo)
     local expClass = ExpansionClass[itemInfo.expansionID]
 
     return { materialClass = materialClass, expClass = expClass }
+end
+
+-- 返回物品所联系的专业
+function Core:GetItemProf(itemID)
+    local info = Addon:GetItemInfo(itemID)
+    local materialClass = self:GetMaterialClass(info).materialClass
+    if materialClass == MaterialClass.JinShu then
+        return Addon.Prof.Min
+    elseif materialClass == MaterialClass.Cao then
+        return Addon.Prof.Herb
+    elseif materialClass == MaterialClass.Pi then
+        return Addon.Prof.Skin
+    elseif materialClass == MaterialClass.Bu then
+        return Addon.Prof.Tailor
+    elseif materialClass == MaterialClass.FuMo then
+        return Addon.Prof.Enchant
+        -- elseif materialClass == MaterialClass.GongCheng then
+        --     return Addon.Prof.Engineer
+    elseif materialClass == MaterialClass.MingWen then
+        return Addon.Prof.Inscription
+    elseif materialClass == MaterialClass.ZhuBao then
+        return Addon.Prof.Jewel
+    else
+        return Addon.Prof.None
+    end
 end
 
 function Core:GetActiveVal(itemInfo, tree)

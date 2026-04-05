@@ -2,6 +2,18 @@ local _, Addon = ...
 local Sync = Addon.Sync
 local Core = Addon.Core
 
+function Sync:CurrentPlayerHasProf(prof)
+    local prof1, prof2 = GetProfessions()
+    local skillLine1 = select(7, GetProfessionInfo(prof1))
+    local skillLine2 = select(7, GetProfessionInfo(prof2))
+    return prof ~= 0 and (prof == skillLine1 or prof == skillLine2)
+end
+
+-- 此物与我有缘
+function Sync:ItemProfMatchMe(itemID)
+    local itemProf = Core:GetItemProf(itemID)
+    return self:CurrentPlayerHasProf(itemProf)
+end
 
 function Sync:Execute()
     local inventories, accounts = Addon:GetItems(true, "inventory", "account")
@@ -14,6 +26,8 @@ function Sync:Execute()
         if cfg and cfg.val ~= Addon.SAVE2.NONE then
             if cfg.val == Addon.SAVE2.ONE and cfg.to == me then
                 -- pass
+            elseif cfg.val == Addon.SAVE2.ONE and self:ItemProfMatchMe(item1.itemID) then
+                -- pass 如果这是一种‘集中模式’，但不是集中到我身上，但我也和他专业匹配，那这种物品我也不需要提交
             else
                 table.insert(queue1, item1)
             end
