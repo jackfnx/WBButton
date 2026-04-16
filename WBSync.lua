@@ -20,6 +20,8 @@ function Sync:Execute()
     local spaceInv, spaceAcc = Addon:GetItems(false, "inventory", "account")
     local me = Addon:GetCurrentCharacter()
 
+    Addon:TreeDataInit()
+
     local queue1 = {}
     for _, item1 in ipairs(inventories) do
         local cfg = Core:ReadConfig(item1.itemID)

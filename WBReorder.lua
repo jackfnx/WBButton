@@ -13,6 +13,8 @@ function Reorder:Execute()
     local accounts = Addon:GetItems(true, "account")
     local spaces = Addon:GetItems(false, "account")
 
+    Addon:TreeDataInit()
+
     local grouped = {}
     for _, item in ipairs(accounts) do
         if grouped[item.itemID] == nil then
