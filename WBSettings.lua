@@ -68,10 +68,10 @@ function Settings:CreateConfigUI()
     configFrame.nodes = {}
 
     Settings.ConfigDialog = configFrame
-    Addon:TreeDataInit()
 end
 
 function Settings:Execute()
+    Addon:TreeDataInit()
     Settings:RefreshTree()
     Settings.ConfigDialog:Show()
 end
